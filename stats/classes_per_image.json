@@ -1,0 +1,19 @@
+{
+  "type": "histogram",
+  "title": "Distinct classes per image",
+  "series": [
+    {
+      "name": "classes",
+      "data": [
+        {
+          "x": "0",
+          "y": 0
+        },
+        {
+          "x": "1",
+          "y": 494
+        }
+      ]
+    }
+  ]
+}

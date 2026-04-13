@@ -1,0 +1,13 @@
+{
+  "type": "pie",
+  "title": "Dataset Split Distribution",
+  "data": {
+    "labels": [],
+    "values": [],
+    "colors": [
+      "#3498db",
+      "#e74c3c",
+      "#2ecc71"
+    ]
+  }
+}

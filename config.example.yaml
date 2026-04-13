@@ -1,0 +1,72 @@
+# Dataset Configuration File
+# Copy this to config.yaml and edit it to match your dataset.
+
+# Basic Info
+dataset_id: "unique-dataset-id"
+dataset_name: "Your Dataset Name"
+year: 2024
+
+# Task Type: object_detection, segmentation, classification
+task_type: "object_detection"
+
+# Optional when task_type="segmentation": semantic_segmentation | instance_segmentation | panoptic_segmentation
+# segmentation_type: "semantic_segmentation"
+
+# Format: 
+#  - coco: Common Objects in Context JSON format
+#  - yolo: Space-separated TXT files (class x y w h)
+#  - voc: PASCAL VOC XML files  
+#  - image_folder: Folders named by class containing images
+#  - png_masks: Images and corresponding PNG masks
+format: "coco" 
+
+# Define Splits EITHER via 'splits' (multi-split) OR 'data' (single split)
+
+# Option A: Multi-split (recommended)
+splits:
+  train:
+    annotations: "annotations/train.json"      # Path to annotations file (COCO) or folder (YOLO/VOC)
+    images_root: "images/train"                # Root folder containing images
+  
+  val:
+    annotations: "annotations/val.json"
+    images_root: "images/val"
+    
+  test:
+    annotations: "annotations/test.json"
+    images_root: "images/test"
+
+# Option B: Single dataset (uncomment to use instead of 'splits')
+# data:
+#   annotations: "annotations/all.json"
+#   images_root: "images/"
+
+# Geographic metadata
+countries:
+  - name: "India"
+    image_count: 3500
+  - name: "Bangladesh"
+    image_count: 1500
+
+temporal_scope: "2021-2024"
+
+# Authors & Citation
+authors:
+  - name: "Your Name"
+    affiliation: "Your University"
+    role: "Lead Researcher"
+
+citations:
+  bibtex: |
+    @dataset{your_dataset,
+      title={Your Dataset Name},
+      author={Your Name},
+      year={2024},
+      publisher={GitHub},
+      howpublished={\url{https://github.com/large-road-damage-datalake/dataset-name}}
+    }
+
+# License
+license: "CC-BY-4.0"
+
+# Note: Paths are relative to the repository root.

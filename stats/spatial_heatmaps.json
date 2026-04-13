@@ -1,0 +1,10 @@
+{
+  "generated": true,
+  "dir": "visualizations/spatial_heatmaps",
+  "classes": [
+    {
+      "class": "crack",
+      "file": "visualizations/spatial_heatmaps/crack.png"
+    }
+  ]
+}

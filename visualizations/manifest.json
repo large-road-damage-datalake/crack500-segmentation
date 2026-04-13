@@ -1,0 +1,28 @@
+{
+  "generated_at": 1776091635.0861487,
+  "visualizations": [
+    {
+      "name": "class_distribution",
+      "type": "bar_chart",
+      "file": "class_distribution.json",
+      "description": "Distribution of annotations by class"
+    },
+    {
+      "name": "dataset_summary",
+      "type": "summary_stats",
+      "file": "dataset_summary.json",
+      "description": "Overall dataset statistics"
+    },
+    {
+      "name": "split_distribution",
+      "type": "pie_chart",
+      "file": "split_distribution.json",
+      "description": "Train/Val/Test split percentages"
+    }
+  ],
+  "sample_images": {
+    "location": "samples/",
+    "count": 494,
+    "status": "available"
+  }
+}

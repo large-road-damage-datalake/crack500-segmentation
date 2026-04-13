@@ -1,0 +1,21 @@
+# User configuration
+config.yaml
+local.env
+
+# Generated statistics
+stats/stats.json
+stats/*.png
+visualizations/*.png
+visualizations/*.mp4
+visualizations/*.webm
+
+# Python
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.venv/
+
+# OS generated files
+.DS_Store
+Thumbs.db

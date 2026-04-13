@@ -1,0 +1,186 @@
+{
+  "schema_version": "1.0",
+  "basic_info": {
+    "id": "crack500-segmentation",
+    "name": "Crack500",
+    "short_name": "crack500-seg",
+    "description": "Segmentation packaging of Crack500 from the pavement-crack-detection project, with pixel-level crack masks.",
+    "year": 2019
+  },
+  "project_context": {
+    "task": "segmentation",
+    "tasks": [
+      "segmentation"
+    ],
+    "damage_types": [
+      "crack"
+    ],
+    "task_classification": {
+      "primary_task": "segmentation",
+      "task_subtype": "semantic_segmentation"
+    },
+    "segmentation_type": "semantic_segmentation",
+    "task_subtype": "semantic_segmentation"
+  },
+  "imaging_setup": {
+    "camera": "Road-surface crack inspection imaging setup",
+    "camera_viewpoint": [
+      "top-down"
+    ],
+    "resolution": "1440x2560, 2448x3168, 2448x3180, 2560x1440, 2592x1904, 2592x1936, 3264x2448",
+    "lighting_conditions": "Outdoor pavement scenes with varying texture and illumination",
+    "capture_height_mm": "Not reported",
+    "geotagged": false,
+    "resolution_details": [
+      {
+        "resolution": "1440x2560",
+        "count": 16
+      },
+      {
+        "resolution": "2448x3168",
+        "count": 1
+      },
+      {
+        "resolution": "2448x3180",
+        "count": 1
+      },
+      {
+        "resolution": "2560x1440",
+        "count": 413
+      },
+      {
+        "resolution": "2592x1904",
+        "count": 1
+      },
+      {
+        "resolution": "2592x1936",
+        "count": 26
+      },
+      {
+        "resolution": "3264x2448",
+        "count": 36
+      }
+    ]
+  },
+  "annotation_schema": [
+    {
+      "type": "segmentation_mask",
+      "description": "Binary crack masks for pixelwise pavement crack detection",
+      "classes": [
+        {
+          "id": 1,
+          "name": "crack",
+          "description": "Crack500 class: crack",
+          "color": "#294F71"
+        }
+      ]
+    }
+  ],
+  "statistics": {
+    "n_images": 494,
+    "n_annotations": 5040,
+    "n_images_with_annotations": 494,
+    "average_annotations_per_image": 10.20242914979757,
+    "dataset_size": "1.18 GB",
+    "dataset_size_bytes": 1270914148,
+    "dataset_file_count": 988,
+    "image_format": "png_masks",
+    "class_distribution": {
+      "crack": 5040
+    },
+    "split": {
+      "data": {
+        "n_images": 494,
+        "percentage": 1.0,
+        "n_images_with_annotations": 494,
+        "annotation_coverage": 1.0,
+        "dataset_size": "1.18 GB",
+        "dataset_size_bytes": 1270914148,
+        "dataset_file_count": 988
+      }
+    }
+  },
+  "geographic_coverage": {
+    "countries": [
+      {
+        "name": "United States",
+        "image_count": 494,
+        "annotated_image_count": 494,
+        "annotation_coverage": 1.0
+      }
+    ],
+    "temporal_scope": "Published 2019"
+  },
+  "quality_assurance": {
+    "annotation_quality": "Pixel-level masks distributed with source Crack500 release",
+    "inter_annotator_agreement": "Not reported",
+    "review_status": "Published research dataset"
+  },
+  "authors": [
+    {
+      "name": "Lei Zhang",
+      "affiliation": "Not reported",
+      "role": "Dataset Creator"
+    },
+    {
+      "name": "Fan Yang",
+      "affiliation": "Temple University",
+      "role": "Dataset Creator"
+    },
+    {
+      "name": "Yimin Daniel Zhang",
+      "affiliation": "Not reported",
+      "role": "Dataset Creator"
+    },
+    {
+      "name": "Ying Julie Zhu",
+      "affiliation": "Not reported",
+      "role": "Dataset Creator"
+    },
+    {
+      "name": "Sijia Yu",
+      "affiliation": "Not reported",
+      "role": "Dataset Creator"
+    },
+    {
+      "name": "Danil Prokhorov",
+      "affiliation": "Not reported",
+      "role": "Dataset Creator"
+    },
+    {
+      "name": "Xue Mei",
+      "affiliation": "Not reported",
+      "role": "Dataset Creator"
+    },
+    {
+      "name": "Haibin Ling",
+      "affiliation": "Not reported",
+      "role": "Dataset Creator"
+    }
+  ],
+  "license": "No explicit license stated in source repository",
+  "links": {
+    "github": "https://github.com/large-road-damage-datalake/crack500-segmentation",
+    "download": "https://github.com/fyangneil/pavement-crack-detection?tab=readme-ov-file",
+    "paper": "https://ieeexplore.ieee.org/abstract/document/8694955",
+    "homepage": "https://github.com/fyangneil/pavement-crack-detection?tab=readme-ov-file"
+  },
+  "citation": {
+    "bibtex": "@article{yang2019feature,\n  title = {Feature Pyramid and Hierarchical Boosting Network for Pavement Crack Detection},\n  author = {Yang, Fan and Zhang, Lei and Yu, Sijia and Prokhorov, Danil and Mei, Xue and Ling, Haibin},\n  journal = {IEEE Transactions on Intelligent Transportation Systems},\n  year = {2019},\n  url = {https://ieeexplore.ieee.org/abstract/document/8694955}\n}\n\n@inproceedings{zhang2016road,\n  title = {Road crack detection using deep convolutional neural network},\n  author = {Zhang, Lei and Yang, Fan and Zhang, Yimin Daniel and Zhu, Ying Julie},\n  booktitle = {2016 IEEE International Conference on Image Processing (ICIP)},\n  pages = {3708--3712},\n  year = {2016},\n  doi = {10.1109/ICIP.2016.7533052},\n  url = {https://ieeexplore.ieee.org/document/7533052}\n}"
+  },
+  "tags": [
+    "segmentation",
+    "pavement-crack",
+    "crack500",
+    "png-masks",
+    "united-states",
+    "top-down"
+  ],
+  "source_publication": {
+    "dataset_doi": "Not provided",
+    "article_doi": "See cited papers",
+    "article_title": "Feature Pyramid and Hierarchical Boosting Network for Pavement Crack Detection",
+    "journal": "IEEE Transactions on Intelligent Transportation Systems",
+    "year": 2019
+  }
+}

@@ -1,0 +1,45 @@
+{
+  "version": 1,
+  "artifacts": [
+    {
+      "name": "class_balance",
+      "file": "stats/class_balance.json",
+      "type": "table"
+    },
+    {
+      "name": "class_cooccurrence",
+      "file": "stats/class_cooccurrence.json",
+      "type": "matrix"
+    },
+    {
+      "name": "objects_distribution",
+      "file": "stats/objects_distribution.json",
+      "type": "heatmap"
+    },
+    {
+      "name": "class_sizes",
+      "file": "stats/class_sizes.json",
+      "type": "table"
+    },
+    {
+      "name": "classes_treemap",
+      "file": "stats/classes_treemap.json",
+      "type": "treemap"
+    },
+    {
+      "name": "classes_per_image",
+      "file": "stats/classes_per_image.json",
+      "type": "histogram"
+    },
+    {
+      "name": "spatial_heatmaps",
+      "file": "stats/spatial_heatmaps.json",
+      "type": "images"
+    },
+    {
+      "name": "samples_summary",
+      "file": "stats/samples_summary.json",
+      "type": "summary"
+    }
+  ]
+}
