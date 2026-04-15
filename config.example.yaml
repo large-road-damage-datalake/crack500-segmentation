@@ -1,72 +1,96 @@
 # Dataset Configuration File
-# Copy this to config.yaml and edit it to match your dataset.
+# Copy this to a new config file under datasets-workspace/configs/.
 
-# Basic Info
+# Basic information
 dataset_id: "unique-dataset-id"
 dataset_name: "Your Dataset Name"
-year: 2024
+description: "Short package description"
+year: 2026
 
-# Task Type: object_detection, segmentation, classification
-task_type: "object_detection"
+# Task type: object_detection | segmentation | classification
+task_type: "segmentation"
 
-# Optional when task_type="segmentation": semantic_segmentation | instance_segmentation | panoptic_segmentation
-# segmentation_type: "semantic_segmentation"
+# Optional when task_type=segmentation:
+# semantic_segmentation | instance_segmentation | panoptic_segmentation
+segmentation_type: "semantic_segmentation"
 
-# Format: 
-#  - coco: Common Objects in Context JSON format
-#  - yolo: Space-separated TXT files (class x y w h)
-#  - voc: PASCAL VOC XML files  
-#  - image_folder: Folders named by class containing images
-#  - png_masks: Images and corresponding PNG masks
-format: "coco" 
+# Format:
+# - coco
+# - yolo
+# - voc
+# - image_folder
+# - png_masks
+format: "png_masks"
 
-# Define Splits EITHER via 'splits' (multi-split) OR 'data' (single split)
+# IMPORTANT: define either 'splits' or 'data' (not both).
 
-# Option A: Multi-split (recommended)
-splits:
-  train:
-    annotations: "annotations/train.json"      # Path to annotations file (COCO) or folder (YOLO/VOC)
-    images_root: "images/train"                # Root folder containing images
-  
-  val:
-    annotations: "annotations/val.json"
-    images_root: "images/val"
-    
-  test:
-    annotations: "annotations/test.json"
-    images_root: "images/test"
+# Option A: Multi-split
+# splits:
+#   train:
+#     annotations: "annotations/train.json"
+#     images_root: "images/train"
+#   val:
+#     annotations: "annotations/val.json"
+#     images_root: "images/val"
+#   test:
+#     annotations: "annotations/test.json"
+#     images_root: "images/test"
 
-# Option B: Single dataset (uncomment to use instead of 'splits')
-# data:
-#   annotations: "annotations/all.json"
-#   images_root: "images/"
+# Option B: Single split (recommended for most package onboarding)
+data:
+  images_root: "D:/path/to/images"
+  masks_root: "D:/path/to/masks"
 
-# Geographic metadata
+  # For png_masks, list mask filename suffixes checked in order.
+  # Example: image abc.jpg can match abc_MASK.png with suffix _MASK,
+  # or abc.png with empty suffix.
+  mask_suffixes: [""]
+
+  # For semantic segmentation, define integer-to-class mapping.
+  # Background is usually omitted from class_map and optionally excluded.
+  class_map:
+    "1": "crack"
+    "2": "pothole"
+
+  # Optional labels to exclude from foreground stats/components.
+  # Supports either raw ids ("0") or mapped names ("background").
+  class_exclude: ["0"]
+
+  # Optional for segmentation with very large masks.
+  # false = class-presence counting only (faster), true = connected components.
+  connected_components: false
+
+# Optional helpers for classification country stats.
+# If omitted, heuristics based on class names are used.
+# positive_classes: ["crack", "pothole"]
+
+# Geographic and temporal metadata
 countries:
-  - name: "India"
-    image_count: 3500
-  - name: "Bangladesh"
-    image_count: 1500
+  - name: "Country Name"
+    image_count: 0
+temporal_scope: "Not specified"
 
-temporal_scope: "2021-2024"
-
-# Authors & Citation
+# Authors
 authors:
-  - name: "Your Name"
-    affiliation: "Your University"
-    role: "Lead Researcher"
+  - name: "Author Name"
+    affiliation: "Organization"
+    role: "Dataset Creator"
 
+# License string shown in METADATA.json
+license: "Specify license"
+
+# Public links
+links:
+  github: "https://github.com/large-road-damage-datalake/unique-dataset-id"
+  download: "https://example.com/dataset-download"
+
+# Citation metadata used to seed METADATA.json
 citations:
   bibtex: |
-    @dataset{your_dataset,
+    @dataset{unique_dataset_id,
       title={Your Dataset Name},
-      author={Your Name},
-      year={2024},
-      publisher={GitHub},
-      howpublished={\url{https://github.com/large-road-damage-datalake/dataset-name}}
+      author={Author Name},
+      year={2026},
+      publisher={Publisher},
+      url={https://github.com/large-road-damage-datalake/unique-dataset-id}
     }
-
-# License
-license: "CC-BY-4.0"
-
-# Note: Paths are relative to the repository root.

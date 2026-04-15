@@ -2,13 +2,18 @@ from pathlib import Path
 import json
 
 REQUIRED_METADATA_FIELDS = [
+    "schema_version",
     "basic_info.id",
     "basic_info.name",
     "basic_info.short_name",
     "basic_info.description",
+    "basic_info.year",
     "project_context.task",
+    "project_context.task_classification.primary_task",
     "statistics.n_images",
     "statistics.n_annotations",
+    "statistics.n_images_with_annotations",
+    "statistics.class_distribution",
     "license",
     "links.github",
     "links.download",
@@ -27,7 +32,7 @@ def _get_nested(obj, dotted):
 
 def load_metadata(repo_root: Path):
     metadata_path = repo_root / "METADATA.json"
-    with metadata_path.open("r", encoding="utf-8") as f:
+    with metadata_path.open("r", encoding="utf-8-sig") as f:
         return json.load(f)
 
 

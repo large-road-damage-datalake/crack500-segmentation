@@ -6,13 +6,17 @@ STATS_FILES = [
     "stats/objects_distribution.json",
     "stats/classes_per_image.json",
     "stats/classes_treemap.json",
+    "stats/spatial_heatmaps.json",
+    "stats/samples_summary.json",
+    "stats/manifest.json",
 ]
 
 VIS_FILES = [
-    "visualizations/poster.png",
-    "visualizations/horizontal_grid.png",
-    "visualizations/vertical_grid.png",
-    "visualizations/side_annotations_grid.png",
+    "visualizations/class_distribution.json",
+    "visualizations/dataset_summary.json",
+    "visualizations/split_distribution.json",
+    "visualizations/manifest.json",
+    "visualizations/samples/samples_manifest.json",
 ]
 
 DOC_FILES = [

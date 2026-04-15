@@ -118,43 +118,33 @@
   },
   "authors": [
     {
-      "name": "Lei Zhang",
-      "affiliation": "Not reported",
-      "role": "Dataset Creator"
-    },
-    {
       "name": "Fan Yang",
-      "affiliation": "Temple University",
+      "affiliation": "Department of Computer and Information Sciences, Temple University",
       "role": "Dataset Creator"
     },
     {
-      "name": "Yimin Daniel Zhang",
-      "affiliation": "Not reported",
-      "role": "Dataset Creator"
-    },
-    {
-      "name": "Ying Julie Zhu",
-      "affiliation": "Not reported",
+      "name": "Lei Zhang",
+      "affiliation": "Department of Radiology, University of Pittsburgh",
       "role": "Dataset Creator"
     },
     {
       "name": "Sijia Yu",
-      "affiliation": "Not reported",
+      "affiliation": "Department of Computer and Information Sciences, Temple University",
       "role": "Dataset Creator"
     },
     {
       "name": "Danil Prokhorov",
-      "affiliation": "Not reported",
+      "affiliation": "Toyota Research Institute, Ann Arbor",
       "role": "Dataset Creator"
     },
     {
       "name": "Xue Mei",
-      "affiliation": "Not reported",
+      "affiliation": "Department of Future Mobility Research, Toyota Technical Center Division, Toyota Research Institute",
       "role": "Dataset Creator"
     },
     {
       "name": "Haibin Ling",
-      "affiliation": "Not reported",
+      "affiliation": "Department of Computer and Information Sciences, Temple University",
       "role": "Dataset Creator"
     }
   ],
@@ -178,7 +168,7 @@
   ],
   "source_publication": {
     "dataset_doi": "Not provided",
-    "article_doi": "See cited papers",
+    "article_doi": "10.1109/TITS.2019.2910595",
     "article_title": "Feature Pyramid and Hierarchical Boosting Network for Pavement Crack Detection",
     "journal": "IEEE Transactions on Intelligent Transportation Systems",
     "year": 2019

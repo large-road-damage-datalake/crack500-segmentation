@@ -6,8 +6,6 @@ local.env
 stats/stats.json
 stats/*.png
 visualizations/*.png
-visualizations/*.mp4
-visualizations/*.webm
 
 # Python
 __pycache__/
