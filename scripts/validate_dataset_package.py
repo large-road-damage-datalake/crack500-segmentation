@@ -63,6 +63,109 @@ def _normalized_label(value):
     return re.sub(r"[^a-z0-9]+", "", str(value or "").lower())
 
 
+def _is_code_label(name):
+    token = re.sub(r"\s+", "", str(name or ""))
+    return bool(re.match(r"^[A-Za-z]+[0-9][A-Za-z0-9]*$", token))
+
+
+def _validate_class_taxonomy_semantics(metadata):
+    issues = []
+
+    project_context = metadata.get("project_context", {}) if isinstance(metadata, dict) else {}
+    declared_damage_types = project_context.get("damage_types", [])
+    if not isinstance(declared_damage_types, list):
+        declared_damage_types = []
+
+    class_taxonomy = metadata.get("class_taxonomy", {}) if isinstance(metadata, dict) else {}
+    taxonomy_by_canonical = {}
+    damage_target_families = set()
+
+    if isinstance(class_taxonomy, dict):
+        version = class_taxonomy.get("version")
+        classes = class_taxonomy.get("classes")
+        if version in (None, ""):
+            issues.append("class_taxonomy.version missing")
+        if not isinstance(classes, list) or not classes:
+            issues.append("class_taxonomy.classes missing or empty")
+            classes = []
+
+        for ci, cls in enumerate(classes):
+            if not isinstance(cls, dict):
+                continue
+
+            canonical_name = str(cls.get("canonical_name", "")).strip()
+            role = str(cls.get("role", "")).strip()
+            damage_family = str(cls.get("damage_family", "")).strip()
+
+            if not canonical_name:
+                issues.append(f"class_taxonomy.classes[{ci}].canonical_name missing")
+                continue
+            taxonomy_by_canonical[canonical_name] = cls
+
+            if not role:
+                issues.append(f"class_taxonomy.classes[{ci}].role missing for canonical '{canonical_name}'")
+            if not damage_family:
+                issues.append(
+                    f"class_taxonomy.classes[{ci}].damage_family missing for canonical '{canonical_name}'"
+                )
+
+            role_norm = role.lower()
+            if role_norm in {"damage_target", "positive"} and damage_family:
+                damage_target_families.add(damage_family)
+    else:
+        issues.append("class_taxonomy missing or invalid")
+
+    schemas = metadata.get("annotation_schema", []) if isinstance(metadata, dict) else []
+    if not isinstance(schemas, list):
+        schemas = []
+
+    for si, schema in enumerate(schemas):
+        if not isinstance(schema, dict):
+            continue
+        classes = schema.get("classes", [])
+        if not isinstance(classes, list):
+            continue
+
+        for ci, cls in enumerate(classes):
+            if not isinstance(cls, dict):
+                continue
+
+            label = str(cls.get("name", "")).strip() or f"class_{si}_{ci}"
+            canonical_name = str(cls.get("canonical_name", "")).strip()
+
+            if not canonical_name:
+                issues.append(
+                    f"annotation_schema[{si}].classes[{ci}].canonical_name missing for label '{label}'"
+                )
+            elif canonical_name not in taxonomy_by_canonical:
+                issues.append(
+                    f"annotation_schema[{si}].classes[{ci}] canonical_name '{canonical_name}' not found in class_taxonomy.classes"
+                )
+
+            if _is_code_label(label):
+                taxonomy_cls = taxonomy_by_canonical.get(canonical_name, {})
+                role_norm = str(taxonomy_cls.get("role", "")).strip().lower()
+                taxonomy_source = str(taxonomy_cls.get("taxonomy_source", "")).strip().lower()
+                if role_norm == "code_legacy":
+                    pass
+                elif taxonomy_source in {"codebook", "description"}:
+                    pass
+                else:
+                    issues.append(
+                        "code label '{}' must be mapped via codebook/description or explicitly marked "
+                        "role='code_legacy'".format(label)
+                    )
+
+    extra_types = [t for t in declared_damage_types if str(t).strip() and str(t) not in damage_target_families]
+    if extra_types:
+        issues.append(
+            "project_context.damage_types contains values not backed by damage_target classes: "
+            + ", ".join(sorted(set(str(t) for t in extra_types)))
+        )
+
+    return issues
+
+
 def _is_negative_class_label(name):
     token = _normalized_label(name)
     negative_keys = (
@@ -359,6 +462,7 @@ def validate_dataset_package(package_dir):
                 val = _get_nested(metadata, field)
                 if val is None or val == "" or val == []:
                     missing_fields.append(field)
+            missing_fields.extend(_validate_class_taxonomy_semantics(metadata))
         except Exception as e:
             missing_fields.append(f"METADATA.json parse error: {e}")
     else:

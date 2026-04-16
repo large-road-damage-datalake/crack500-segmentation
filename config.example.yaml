@@ -64,6 +64,20 @@ data:
 # If omitted, heuristics based on class names are used.
 # positive_classes: ["crack", "pothole"]
 
+# Optional taxonomy override map for code-like labels (for example RDD classes D00, D10, D40).
+# If not provided, enrichment will try taxonomy registry aliases first.
+# For code labels, description-based inference is attempted before falling back to code_legacy.
+# Mapped values populate class_taxonomy; annotation_schema classes keep canonical_name as reference only.
+# label_codebook:
+#   D00:
+#     canonical_name: "crack.longitudinal"
+#     damage_family: "crack"
+#     role: "damage_target"
+#   D40:
+#     canonical_name: "pothole"
+#     damage_family: "pothole"
+#     role: "damage_target"
+
 # Geographic and temporal metadata
 countries:
   - name: "Country Name"

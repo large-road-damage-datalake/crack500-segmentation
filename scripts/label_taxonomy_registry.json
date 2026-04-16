@@ -1,0 +1,234 @@
+{
+  "version": "road_damage_v1",
+  "canonical_classes": [
+    {
+      "canonical_name": "crack",
+      "display_name": "Crack",
+      "damage_family": "crack",
+      "damage_subtype": "generic",
+      "role": "damage_target",
+      "aliases": ["crack", "cracked", "Crack"]
+    },
+    {
+      "canonical_name": "crack.alligator",
+      "display_name": "Alligator Crack",
+      "damage_family": "crack",
+      "damage_subtype": "alligator",
+      "role": "damage_target",
+      "aliases": ["alligator", "Alligator crack", "Aligator Crack", "alligator crack"]
+    },
+    {
+      "canonical_name": "crack.longitudinal",
+      "display_name": "Longitudinal Crack",
+      "damage_family": "crack",
+      "damage_subtype": "longitudinal",
+      "role": "damage_target",
+      "aliases": [
+        "longitudinal",
+        "Longitudinal crack",
+        "Longitudinal Crack",
+        "Lane Longitudinal Crack",
+        "longitudinal crack"
+      ]
+    },
+    {
+      "canonical_name": "crack.transverse",
+      "display_name": "Transverse Crack",
+      "damage_family": "crack",
+      "damage_subtype": "transverse",
+      "role": "damage_target",
+      "aliases": ["transverse", "Transverse crack", "Transverse Crack", "Transvers Crack", "transverse crack"]
+    },
+    {
+      "canonical_name": "crack.diagonal",
+      "display_name": "Diagonal Crack",
+      "damage_family": "crack",
+      "damage_subtype": "diagonal",
+      "role": "damage_target",
+      "aliases": ["Oblique crack", "oblique crack", "diagonal crack"]
+    },
+    {
+      "canonical_name": "crack.block",
+      "display_name": "Block Crack",
+      "damage_family": "crack",
+      "damage_subtype": "block",
+      "role": "damage_target",
+      "aliases": ["Block crack", "Block Crack", "block crack"]
+    },
+    {
+      "canonical_name": "crack.reflective",
+      "display_name": "Reflective Crack",
+      "damage_family": "crack",
+      "damage_subtype": "reflective",
+      "role": "damage_target",
+      "aliases": ["Reflective Crack", "reflective crack"]
+    },
+    {
+      "canonical_name": "crack.sealed",
+      "display_name": "Sealed Crack",
+      "damage_family": "crack",
+      "damage_subtype": "sealed",
+      "role": "repair",
+      "aliases": [
+        "sealed",
+        "sealed_crack",
+        "Sealed Longitudinal Crack",
+        "Sealed Reflective Crack",
+        "Sealed Block Crack",
+        "Sealed Transvers Cracks"
+      ]
+    },
+    {
+      "canonical_name": "pothole",
+      "display_name": "Pothole",
+      "damage_family": "pothole",
+      "damage_subtype": "generic",
+      "role": "damage_target",
+      "aliases": ["pothole", "Pothole"]
+    },
+    {
+      "canonical_name": "patch.applied",
+      "display_name": "Applied Patch",
+      "damage_family": "patch_repair",
+      "damage_subtype": "applied",
+      "role": "repair",
+      "aliases": ["applied_patch"]
+    },
+    {
+      "canonical_name": "patch.inlaid",
+      "display_name": "Inlaid Patch",
+      "damage_family": "patch_repair",
+      "damage_subtype": "inlaid",
+      "role": "repair",
+      "aliases": ["inlaid_patch"]
+    },
+    {
+      "canonical_name": "repair.general",
+      "display_name": "Repair",
+      "damage_family": "patch_repair",
+      "damage_subtype": "generic",
+      "role": "repair",
+      "aliases": ["Repair", "repair"]
+    },
+    {
+      "canonical_name": "joint.open",
+      "display_name": "Open Joint",
+      "damage_family": "joint_distress",
+      "damage_subtype": "open_joint",
+      "role": "context",
+      "aliases": ["open_joint"]
+    },
+    {
+      "canonical_name": "joint.expansion",
+      "display_name": "Expansion Joint",
+      "damage_family": "joint_distress",
+      "damage_subtype": "expansion_joint",
+      "role": "context",
+      "aliases": ["expansion_joint"]
+    },
+    {
+      "canonical_name": "joint.generic",
+      "display_name": "Joint",
+      "damage_family": "joint_distress",
+      "damage_subtype": "generic",
+      "role": "context",
+      "aliases": ["joint"]
+    },
+    {
+      "canonical_name": "surface.scratch",
+      "display_name": "Scratch",
+      "damage_family": "surface_distress",
+      "damage_subtype": "scratch",
+      "role": "context",
+      "aliases": ["scratch"]
+    },
+    {
+      "canonical_name": "context.road_marking",
+      "display_name": "Road Marking",
+      "damage_family": "context_non_damage",
+      "damage_subtype": "road_marking",
+      "role": "context",
+      "aliases": ["road_marking"]
+    },
+    {
+      "canonical_name": "context.road_verge",
+      "display_name": "Road Verge",
+      "damage_family": "context_non_damage",
+      "damage_subtype": "road_verge",
+      "role": "context",
+      "aliases": ["road_verge"]
+    },
+    {
+      "canonical_name": "context.curb",
+      "display_name": "Curb",
+      "damage_family": "context_non_damage",
+      "damage_subtype": "curb",
+      "role": "context",
+      "aliases": ["curb"]
+    },
+    {
+      "canonical_name": "context.cobblestone",
+      "display_name": "Cobblestone",
+      "damage_family": "context_non_damage",
+      "damage_subtype": "cobblestone",
+      "role": "context",
+      "aliases": ["cobblestone"]
+    },
+    {
+      "canonical_name": "context.vegetation",
+      "display_name": "Vegetation",
+      "damage_family": "context_non_damage",
+      "damage_subtype": "vegetation",
+      "role": "context",
+      "aliases": ["vegetation"]
+    },
+    {
+      "canonical_name": "context.object_fixed",
+      "display_name": "Fixed Object",
+      "damage_family": "context_non_damage",
+      "damage_subtype": "object_fixed",
+      "role": "context",
+      "aliases": ["object_fixed"]
+    },
+    {
+      "canonical_name": "context.object_mobile",
+      "display_name": "Mobile Object",
+      "damage_family": "context_non_damage",
+      "damage_subtype": "object_mobile",
+      "role": "context",
+      "aliases": ["object_mobile"]
+    },
+    {
+      "canonical_name": "context.surface_water_drain",
+      "display_name": "Surface Water Drain",
+      "damage_family": "context_non_damage",
+      "damage_subtype": "surface_water_drain",
+      "role": "context",
+      "aliases": ["surface_water_drain"]
+    },
+    {
+      "canonical_name": "context.street_inventory",
+      "display_name": "Street Inventory",
+      "damage_family": "context_non_damage",
+      "damage_subtype": "street_inventory",
+      "role": "context",
+      "aliases": ["street_inventory"]
+    },
+    {
+      "canonical_name": "class.negative",
+      "display_name": "Negative",
+      "damage_family": "context_non_damage",
+      "damage_subtype": "negative",
+      "role": "negative",
+      "aliases": ["non-cracked", "non cracked", "negative", "normal", "intact", "healthy"]
+    },
+    {
+      "canonical_name": "background",
+      "display_name": "Background",
+      "damage_family": "background",
+      "damage_subtype": "background",
+      "role": "background",
+      "aliases": ["background", "bg", "void", "ignore", "unlabeled", "unknown"]
+    }
+  ]
+}

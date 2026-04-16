@@ -20,7 +20,8 @@
       "task_subtype": "semantic_segmentation"
     },
     "segmentation_type": "semantic_segmentation",
-    "task_subtype": "semantic_segmentation"
+    "task_subtype": "semantic_segmentation",
+    "label_taxonomy_version": "road_damage_v1"
   },
   "imaging_setup": {
     "camera": "Road-surface crack inspection imaging setup",
@@ -71,7 +72,9 @@
           "id": 1,
           "name": "crack",
           "description": "Crack500 class: crack",
-          "color": "#294F71"
+          "color": "#294F71",
+          "canonical_name": "crack",
+          "instances": 5040
         }
       ]
     }
@@ -91,9 +94,9 @@
     "split": {
       "data": {
         "n_images": 494,
-        "percentage": 1.0,
+        "percentage": 1,
         "n_images_with_annotations": 494,
-        "annotation_coverage": 1.0,
+        "annotation_coverage": 1,
         "dataset_size": "1.18 GB",
         "dataset_size_bytes": 1270914148,
         "dataset_file_count": 988
@@ -106,7 +109,7 @@
         "name": "United States",
         "image_count": 494,
         "annotated_image_count": 494,
-        "annotation_coverage": 1.0
+        "annotation_coverage": 1
       }
     ],
     "temporal_scope": "Published 2019"
@@ -172,5 +175,31 @@
     "article_title": "Feature Pyramid and Hierarchical Boosting Network for Pavement Crack Detection",
     "journal": "IEEE Transactions on Intelligent Transportation Systems",
     "year": 2019
+  },
+  "class_taxonomy": {
+    "version": "road_damage_v1",
+    "classes": [
+      {
+        "canonical_name": "crack",
+        "display_name": "Crack",
+        "damage_family": "crack",
+        "damage_subtype": "generic",
+        "role": "damage_target",
+        "is_damage_target": true,
+        "aliases": [
+          "crack",
+          "cracked"
+        ],
+        "source_labels": [
+          "crack"
+        ],
+        "taxonomy_source": "registry",
+        "taxonomy_unresolved": false
+      }
+    ],
+    "damage_types": [
+      "crack"
+    ],
+    "unresolved_labels": []
   }
 }
