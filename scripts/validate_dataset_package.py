@@ -68,6 +68,79 @@ def _is_code_label(name):
     return bool(re.match(r"^[A-Za-z]+[0-9][A-Za-z0-9]*$", token))
 
 
+_ROLE_TO_SEMANTIC_ROLE = {
+    "damage_target": "damage",
+    "positive": "damage",
+    "repair": "repair",
+    "context": "road_feature",
+    "negative": "absence",
+    "background": "none",
+    "ignore": "none",
+    "unknown": "unknown",
+    "code_legacy": "unknown",
+}
+
+_ROLE_TO_TRAINING_ROLE = {
+    "damage_target": "target",
+    "positive": "target",
+    "repair": "context",
+    "context": "context",
+    "negative": "negative",
+    "background": "background",
+    "ignore": "ignore",
+    "unknown": "ignore",
+    "code_legacy": "ignore",
+}
+
+_ALLOWED_MAPPING_TYPES = {"exact", "normalized", "inferred", "codebook", "codebook-based", "lossy"}
+_ALLOWED_MAPPING_CONFIDENCE = {"high", "medium", "low"}
+_ALLOWED_MAPPING_STATUS = {"draft", "verified", "deprecated"}
+
+
+def _derive_semantic_role(role, canonical_name=""):
+    role_norm = str(role or "").strip().lower()
+    canonical = str(canonical_name or "").strip().lower()
+    if role_norm in _ROLE_TO_SEMANTIC_ROLE:
+        return _ROLE_TO_SEMANTIC_ROLE[role_norm]
+    if canonical == "background":
+        return "none"
+    if canonical in {"ignore", "unlabeled"}:
+        return "none"
+    if canonical.startswith("unknown."):
+        return "unknown"
+    if canonical.startswith("class.negative"):
+        return "absence"
+    if canonical.startswith("context."):
+        return "road_feature"
+    if canonical.startswith("repair.") or canonical.startswith("patch."):
+        return "repair"
+    if canonical.startswith("crack") or canonical.startswith("pothole") or canonical.startswith("damage."):
+        return "damage"
+    return "unknown"
+
+
+def _derive_training_role(role, canonical_name=""):
+    role_norm = str(role or "").strip().lower()
+    canonical = str(canonical_name or "").strip().lower()
+    if role_norm in _ROLE_TO_TRAINING_ROLE:
+        return _ROLE_TO_TRAINING_ROLE[role_norm]
+    if canonical == "background":
+        return "background"
+    if canonical in {"ignore", "unlabeled"}:
+        return "ignore"
+    if canonical.startswith("unknown."):
+        return "ignore"
+    if canonical.startswith("class.negative"):
+        return "negative"
+    if canonical.startswith("context."):
+        return "context"
+    if canonical.startswith("repair.") or canonical.startswith("patch."):
+        return "context"
+    if canonical.startswith("crack") or canonical.startswith("pothole") or canonical.startswith("damage."):
+        return "target"
+    return "ignore"
+
+
 def _validate_class_taxonomy_semantics(metadata):
     issues = []
 
@@ -82,6 +155,7 @@ def _validate_class_taxonomy_semantics(metadata):
 
     if isinstance(class_taxonomy, dict):
         version = class_taxonomy.get("version")
+        is_v2 = str(version or "").strip().lower().startswith("road_damage_v2")
         classes = class_taxonomy.get("classes")
         if version in (None, ""):
             issues.append("class_taxonomy.version missing")
@@ -95,6 +169,8 @@ def _validate_class_taxonomy_semantics(metadata):
 
             canonical_name = str(cls.get("canonical_name", "")).strip()
             role = str(cls.get("role", "")).strip()
+            semantic_role = str(cls.get("semantic_role", "")).strip()
+            training_role = str(cls.get("training_role", "")).strip()
             damage_family = str(cls.get("damage_family", "")).strip()
 
             if not canonical_name:
@@ -104,12 +180,85 @@ def _validate_class_taxonomy_semantics(metadata):
 
             if not role:
                 issues.append(f"class_taxonomy.classes[{ci}].role missing for canonical '{canonical_name}'")
-            if not damage_family:
+            if is_v2 and not semantic_role:
                 issues.append(
-                    f"class_taxonomy.classes[{ci}].damage_family missing for canonical '{canonical_name}'"
+                    f"class_taxonomy.classes[{ci}].semantic_role missing for canonical '{canonical_name}'"
+                )
+            if is_v2 and not training_role:
+                issues.append(
+                    f"class_taxonomy.classes[{ci}].training_role missing for canonical '{canonical_name}'"
                 )
 
             role_norm = role.lower()
+            semantic_norm = (semantic_role or _derive_semantic_role(role, canonical_name)).lower()
+            training_norm = (training_role or _derive_training_role(role, canonical_name)).lower()
+            is_damage_target = (
+                (semantic_norm == "damage" and training_norm == "target")
+                or role_norm in {"damage_target", "positive"}
+            )
+
+            if is_damage_target:
+                if not damage_family or damage_family.lower() == "unknown":
+                    issues.append(
+                        f"class_taxonomy.classes[{ci}].damage_family required for damage target canonical '{canonical_name}'"
+                    )
+                else:
+                    damage_target_families.add(damage_family)
+
+            canonical_norm = canonical_name.strip().lower()
+            if canonical_norm.startswith("unknown.") and training_norm in {"background", "target"}:
+                issues.append(
+                    f"class_taxonomy.classes[{ci}] unknown canonical '{canonical_name}' cannot use training_role '{training_norm}'"
+                )
+
+            if canonical_norm == "background":
+                source_labels = cls.get("source_labels") or cls.get("aliases") or []
+                if isinstance(source_labels, list):
+                    conflated = [
+                        s
+                        for s in source_labels
+                        if any(tok in _normalized_label(s) for tok in ("unknown", "unlabeled", "ignore"))
+                    ]
+                    if conflated:
+                        issues.append(
+                            "background canonical is conflated with unknown/ignore/unlabeled labels: "
+                            + ", ".join(sorted(set(str(v) for v in conflated)))
+                        )
+
+            if canonical_norm == "ignore" and training_norm != "ignore":
+                issues.append(
+                    f"class_taxonomy.classes[{ci}] canonical 'ignore' must use training_role='ignore'"
+                )
+            if canonical_norm == "unlabeled" and training_norm not in {"ignore", "negative"}:
+                issues.append(
+                    f"class_taxonomy.classes[{ci}] canonical 'unlabeled' must use training_role ignore/negative"
+                )
+
+            mapping_type = str(cls.get("mapping_type", "")).strip().lower()
+            mapping_confidence = str(cls.get("mapping_confidence", "")).strip().lower()
+            mapping_status = str(cls.get("mapping_status", "")).strip().lower()
+            if mapping_type and mapping_type not in _ALLOWED_MAPPING_TYPES:
+                issues.append(
+                    f"class_taxonomy.classes[{ci}] invalid mapping_type '{mapping_type}' for canonical '{canonical_name}'"
+                )
+            if mapping_confidence and mapping_confidence not in _ALLOWED_MAPPING_CONFIDENCE:
+                issues.append(
+                    f"class_taxonomy.classes[{ci}] invalid mapping_confidence '{mapping_confidence}' for canonical '{canonical_name}'"
+                )
+            if mapping_status and mapping_status not in _ALLOWED_MAPPING_STATUS:
+                issues.append(
+                    f"class_taxonomy.classes[{ci}] invalid mapping_status '{mapping_status}' for canonical '{canonical_name}'"
+                )
+            if mapping_type and not mapping_confidence:
+                issues.append(
+                    f"class_taxonomy.classes[{ci}] mapping_type set but mapping_confidence missing for canonical '{canonical_name}'"
+                )
+
+            if training_norm == "target" and semantic_norm != "damage":
+                issues.append(
+                    f"class_taxonomy.classes[{ci}] target training_role requires semantic_role=damage for canonical '{canonical_name}'"
+                )
+
             if role_norm in {"damage_target", "positive"} and damage_family:
                 damage_target_families.add(damage_family)
     else:
@@ -146,14 +295,25 @@ def _validate_class_taxonomy_semantics(metadata):
                 taxonomy_cls = taxonomy_by_canonical.get(canonical_name, {})
                 role_norm = str(taxonomy_cls.get("role", "")).strip().lower()
                 taxonomy_source = str(taxonomy_cls.get("taxonomy_source", "")).strip().lower()
+                mapping_type = str(taxonomy_cls.get("mapping_type", "")).strip().lower()
                 if role_norm == "code_legacy":
                     pass
-                elif taxonomy_source in {"codebook", "description"}:
+                elif taxonomy_source in {
+                    "codebook",
+                    "codebook_specialized",
+                    "description",
+                    "registry_override",
+                    "registry_override_specialized",
+                }:
                     pass
                 else:
                     issues.append(
                         "code label '{}' must be mapped via codebook/description or explicitly marked "
                         "role='code_legacy'".format(label)
+                    )
+                if role_norm != "code_legacy" and not mapping_type:
+                    issues.append(
+                        "code label '{}' mapping is missing mapping_type quality metadata".format(label)
                     )
 
     extra_types = [t for t in declared_damage_types if str(t).strip() and str(t) not in damage_target_families]

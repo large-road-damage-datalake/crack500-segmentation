@@ -1,234 +1,663 @@
 {
-  "version": "road_damage_v1",
+  "version": "road_damage_v2",
+  "compatibility": {
+    "legacy_key": "canonical_classes",
+    "legacy_role_field": "role",
+    "legacy_behavior": "role is preserved for v1 consumers; semantic_role and training_role add orthogonal v2 semantics"
+  },
+  "normalization_pipeline": [
+    "deterministic_normalization",
+    "alias_lookup",
+    "dataset_codebook_lookup",
+    "controlled_fallback"
+  ],
+  "mapping_policy": {
+    "unknown_to_background_allowed": false,
+    "code_labels_global_inference_allowed": false,
+    "require_dataset_scoped_codebooks": true,
+    "preserve_raw_source_labels": true
+  },
+  "mapping_quality_levels": [
+    "exact",
+    "normalized",
+    "inferred",
+    "codebook",
+    "lossy"
+  ],
   "canonical_classes": [
     {
       "canonical_name": "crack",
       "display_name": "Crack",
+      "parent_canonical_name": null,
+      "hierarchy_level": 1,
+      "is_leaf": false,
       "damage_family": "crack",
       "damage_subtype": "generic",
       "role": "damage_target",
+      "semantic_role": "damage",
+      "training_role": "target",
+      "valid_tasks": ["classification", "object_detection", "segmentation"],
+      "supports_instance_geometry": ["image_level", "bbox", "mask"],
+      "attributes_schema": {
+        "treatment_state": ["sealed", "unsealed"],
+        "location_qualifier": ["lane", "shoulder"],
+        "severity": ["minor", "moderate", "severe"]
+      },
+      "status": "stable",
       "aliases": ["crack", "cracked", "Crack"]
     },
     {
       "canonical_name": "crack.alligator",
       "display_name": "Alligator Crack",
+      "parent_canonical_name": "crack",
+      "hierarchy_level": 2,
+      "is_leaf": true,
       "damage_family": "crack",
       "damage_subtype": "alligator",
       "role": "damage_target",
+      "semantic_role": "damage",
+      "training_role": "target",
+      "valid_tasks": ["classification", "object_detection", "segmentation"],
+      "supports_instance_geometry": ["image_level", "bbox", "mask"],
+      "status": "stable",
       "aliases": ["alligator", "Alligator crack", "Aligator Crack", "alligator crack"]
     },
     {
       "canonical_name": "crack.longitudinal",
       "display_name": "Longitudinal Crack",
+      "parent_canonical_name": "crack",
+      "hierarchy_level": 2,
+      "is_leaf": true,
       "damage_family": "crack",
       "damage_subtype": "longitudinal",
       "role": "damage_target",
+      "semantic_role": "damage",
+      "training_role": "target",
+      "valid_tasks": ["classification", "object_detection", "segmentation"],
+      "supports_instance_geometry": ["image_level", "bbox", "mask"],
+      "attributes_schema": {
+        "treatment_state": ["sealed", "unsealed"],
+        "location_qualifier": ["lane", "shoulder"]
+      },
+      "status": "stable",
       "aliases": [
         "longitudinal",
         "Longitudinal crack",
         "Longitudinal Crack",
         "Lane Longitudinal Crack",
-        "longitudinal crack"
+        "longitudinal crack",
+        "Sealed Longitudinal Crack"
       ]
     },
     {
       "canonical_name": "crack.transverse",
       "display_name": "Transverse Crack",
+      "parent_canonical_name": "crack",
+      "hierarchy_level": 2,
+      "is_leaf": true,
       "damage_family": "crack",
       "damage_subtype": "transverse",
       "role": "damage_target",
-      "aliases": ["transverse", "Transverse crack", "Transverse Crack", "Transvers Crack", "transverse crack"]
+      "semantic_role": "damage",
+      "training_role": "target",
+      "valid_tasks": ["classification", "object_detection", "segmentation"],
+      "supports_instance_geometry": ["image_level", "bbox", "mask"],
+      "attributes_schema": {
+        "treatment_state": ["sealed", "unsealed"]
+      },
+      "status": "stable",
+      "aliases": [
+        "transverse",
+        "Transverse crack",
+        "Transverse Crack",
+        "Transvers Crack",
+        "transverse crack",
+        "Sealed Transvers Cracks",
+        "Sealed Transverse Crack"
+      ]
     },
     {
       "canonical_name": "crack.diagonal",
       "display_name": "Diagonal Crack",
+      "parent_canonical_name": "crack",
+      "hierarchy_level": 2,
+      "is_leaf": true,
       "damage_family": "crack",
       "damage_subtype": "diagonal",
       "role": "damage_target",
+      "semantic_role": "damage",
+      "training_role": "target",
+      "valid_tasks": ["classification", "object_detection", "segmentation"],
+      "supports_instance_geometry": ["image_level", "bbox", "mask"],
+      "status": "stable",
       "aliases": ["Oblique crack", "oblique crack", "diagonal crack"]
     },
     {
       "canonical_name": "crack.block",
       "display_name": "Block Crack",
+      "parent_canonical_name": "crack",
+      "hierarchy_level": 2,
+      "is_leaf": true,
       "damage_family": "crack",
       "damage_subtype": "block",
       "role": "damage_target",
-      "aliases": ["Block crack", "Block Crack", "block crack"]
+      "semantic_role": "damage",
+      "training_role": "target",
+      "valid_tasks": ["classification", "object_detection", "segmentation"],
+      "supports_instance_geometry": ["image_level", "bbox", "mask"],
+      "attributes_schema": {
+        "treatment_state": ["sealed", "unsealed"]
+      },
+      "status": "stable",
+      "aliases": ["Block crack", "Block Crack", "block crack", "Sealed Block Crack"]
     },
     {
       "canonical_name": "crack.reflective",
       "display_name": "Reflective Crack",
+      "parent_canonical_name": "crack",
+      "hierarchy_level": 2,
+      "is_leaf": true,
       "damage_family": "crack",
       "damage_subtype": "reflective",
       "role": "damage_target",
-      "aliases": ["Reflective Crack", "reflective crack"]
+      "semantic_role": "damage",
+      "training_role": "target",
+      "valid_tasks": ["classification", "object_detection", "segmentation"],
+      "supports_instance_geometry": ["image_level", "bbox", "mask"],
+      "attributes_schema": {
+        "treatment_state": ["sealed", "unsealed"]
+      },
+      "status": "stable",
+      "aliases": ["Reflective Crack", "reflective crack", "Sealed Reflective Crack"]
     },
     {
       "canonical_name": "crack.sealed",
       "display_name": "Sealed Crack",
+      "parent_canonical_name": "crack",
+      "hierarchy_level": 2,
+      "is_leaf": true,
       "damage_family": "crack",
       "damage_subtype": "sealed",
-      "role": "repair",
-      "aliases": [
-        "sealed",
-        "sealed_crack",
-        "Sealed Longitudinal Crack",
-        "Sealed Reflective Crack",
-        "Sealed Block Crack",
-        "Sealed Transvers Cracks"
-      ]
+      "role": "damage_target",
+      "semantic_role": "damage",
+      "training_role": "target",
+      "valid_tasks": ["classification", "object_detection", "segmentation"],
+      "supports_instance_geometry": ["image_level", "bbox", "mask"],
+      "resolved_attributes": {
+        "treatment_state": "sealed"
+      },
+      "status": "provisional",
+      "aliases": ["sealed", "sealed_crack", "sealed crack"]
     },
     {
       "canonical_name": "pothole",
       "display_name": "Pothole",
+      "parent_canonical_name": null,
+      "hierarchy_level": 1,
+      "is_leaf": true,
       "damage_family": "pothole",
       "damage_subtype": "generic",
       "role": "damage_target",
+      "semantic_role": "damage",
+      "training_role": "target",
+      "valid_tasks": ["classification", "object_detection", "segmentation"],
+      "supports_instance_geometry": ["image_level", "bbox", "mask"],
+      "status": "stable",
       "aliases": ["pothole", "Pothole"]
+    },
+    {
+      "canonical_name": "repair.general",
+      "display_name": "Repair",
+      "parent_canonical_name": null,
+      "hierarchy_level": 1,
+      "is_leaf": false,
+      "damage_family": "patch_repair",
+      "damage_subtype": "generic",
+      "role": "repair",
+      "semantic_role": "repair",
+      "training_role": "context",
+      "valid_tasks": ["classification", "object_detection", "segmentation"],
+      "supports_instance_geometry": ["image_level", "bbox", "mask"],
+      "status": "stable",
+      "aliases": ["Repair", "repair"]
     },
     {
       "canonical_name": "patch.applied",
       "display_name": "Applied Patch",
+      "parent_canonical_name": "repair.general",
+      "hierarchy_level": 2,
+      "is_leaf": true,
       "damage_family": "patch_repair",
       "damage_subtype": "applied",
       "role": "repair",
+      "semantic_role": "repair",
+      "training_role": "context",
+      "valid_tasks": ["classification", "object_detection", "segmentation"],
+      "supports_instance_geometry": ["image_level", "bbox", "mask"],
+      "status": "stable",
       "aliases": ["applied_patch"]
     },
     {
       "canonical_name": "patch.inlaid",
       "display_name": "Inlaid Patch",
+      "parent_canonical_name": "repair.general",
+      "hierarchy_level": 2,
+      "is_leaf": true,
       "damage_family": "patch_repair",
       "damage_subtype": "inlaid",
       "role": "repair",
+      "semantic_role": "repair",
+      "training_role": "context",
+      "valid_tasks": ["classification", "object_detection", "segmentation"],
+      "supports_instance_geometry": ["image_level", "bbox", "mask"],
+      "status": "stable",
       "aliases": ["inlaid_patch"]
     },
     {
-      "canonical_name": "repair.general",
-      "display_name": "Repair",
-      "damage_family": "patch_repair",
+      "canonical_name": "joint.generic",
+      "display_name": "Joint",
+      "parent_canonical_name": null,
+      "hierarchy_level": 1,
+      "is_leaf": false,
+      "damage_family": "joint_distress",
       "damage_subtype": "generic",
-      "role": "repair",
-      "aliases": ["Repair", "repair"]
+      "role": "context",
+      "semantic_role": "road_feature",
+      "training_role": "context",
+      "valid_tasks": ["classification", "object_detection", "segmentation"],
+      "supports_instance_geometry": ["image_level", "bbox", "mask"],
+      "status": "provisional",
+      "aliases": ["joint"]
     },
     {
       "canonical_name": "joint.open",
       "display_name": "Open Joint",
+      "parent_canonical_name": "joint.generic",
+      "hierarchy_level": 2,
+      "is_leaf": true,
       "damage_family": "joint_distress",
       "damage_subtype": "open_joint",
       "role": "context",
+      "semantic_role": "road_feature",
+      "training_role": "context",
+      "valid_tasks": ["classification", "object_detection", "segmentation"],
+      "supports_instance_geometry": ["image_level", "bbox", "mask"],
+      "status": "provisional",
       "aliases": ["open_joint"]
     },
     {
       "canonical_name": "joint.expansion",
       "display_name": "Expansion Joint",
+      "parent_canonical_name": "joint.generic",
+      "hierarchy_level": 2,
+      "is_leaf": true,
       "damage_family": "joint_distress",
       "damage_subtype": "expansion_joint",
       "role": "context",
+      "semantic_role": "road_feature",
+      "training_role": "context",
+      "valid_tasks": ["classification", "object_detection", "segmentation"],
+      "supports_instance_geometry": ["image_level", "bbox", "mask"],
+      "status": "provisional",
       "aliases": ["expansion_joint"]
-    },
-    {
-      "canonical_name": "joint.generic",
-      "display_name": "Joint",
-      "damage_family": "joint_distress",
-      "damage_subtype": "generic",
-      "role": "context",
-      "aliases": ["joint"]
     },
     {
       "canonical_name": "surface.scratch",
       "display_name": "Scratch",
+      "parent_canonical_name": null,
+      "hierarchy_level": 1,
+      "is_leaf": true,
       "damage_family": "surface_distress",
       "damage_subtype": "scratch",
       "role": "context",
+      "semantic_role": "road_feature",
+      "training_role": "context",
+      "valid_tasks": ["classification", "object_detection", "segmentation"],
+      "supports_instance_geometry": ["image_level", "bbox", "mask"],
+      "status": "provisional",
       "aliases": ["scratch"]
     },
     {
       "canonical_name": "context.road_marking",
       "display_name": "Road Marking",
+      "parent_canonical_name": null,
+      "hierarchy_level": 1,
+      "is_leaf": true,
       "damage_family": "context_non_damage",
       "damage_subtype": "road_marking",
       "role": "context",
+      "semantic_role": "non_road_context",
+      "training_role": "context",
+      "valid_tasks": ["classification", "object_detection", "segmentation"],
+      "supports_instance_geometry": ["image_level", "bbox", "mask"],
+      "status": "stable",
       "aliases": ["road_marking"]
     },
     {
       "canonical_name": "context.road_verge",
       "display_name": "Road Verge",
+      "parent_canonical_name": null,
+      "hierarchy_level": 1,
+      "is_leaf": true,
       "damage_family": "context_non_damage",
       "damage_subtype": "road_verge",
       "role": "context",
+      "semantic_role": "non_road_context",
+      "training_role": "context",
+      "valid_tasks": ["classification", "object_detection", "segmentation"],
+      "supports_instance_geometry": ["image_level", "bbox", "mask"],
+      "status": "stable",
       "aliases": ["road_verge"]
     },
     {
       "canonical_name": "context.curb",
       "display_name": "Curb",
+      "parent_canonical_name": null,
+      "hierarchy_level": 1,
+      "is_leaf": true,
       "damage_family": "context_non_damage",
       "damage_subtype": "curb",
       "role": "context",
+      "semantic_role": "non_road_context",
+      "training_role": "context",
+      "valid_tasks": ["classification", "object_detection", "segmentation"],
+      "supports_instance_geometry": ["image_level", "bbox", "mask"],
+      "status": "stable",
       "aliases": ["curb"]
     },
     {
       "canonical_name": "context.cobblestone",
       "display_name": "Cobblestone",
+      "parent_canonical_name": null,
+      "hierarchy_level": 1,
+      "is_leaf": true,
       "damage_family": "context_non_damage",
       "damage_subtype": "cobblestone",
       "role": "context",
+      "semantic_role": "non_road_context",
+      "training_role": "context",
+      "valid_tasks": ["classification", "object_detection", "segmentation"],
+      "supports_instance_geometry": ["image_level", "bbox", "mask"],
+      "status": "stable",
       "aliases": ["cobblestone"]
     },
     {
       "canonical_name": "context.vegetation",
       "display_name": "Vegetation",
+      "parent_canonical_name": null,
+      "hierarchy_level": 1,
+      "is_leaf": true,
       "damage_family": "context_non_damage",
       "damage_subtype": "vegetation",
       "role": "context",
+      "semantic_role": "non_road_context",
+      "training_role": "context",
+      "valid_tasks": ["classification", "object_detection", "segmentation"],
+      "supports_instance_geometry": ["image_level", "bbox", "mask"],
+      "status": "stable",
       "aliases": ["vegetation"]
     },
     {
       "canonical_name": "context.object_fixed",
       "display_name": "Fixed Object",
+      "parent_canonical_name": null,
+      "hierarchy_level": 1,
+      "is_leaf": true,
       "damage_family": "context_non_damage",
       "damage_subtype": "object_fixed",
       "role": "context",
+      "semantic_role": "non_road_context",
+      "training_role": "context",
+      "valid_tasks": ["classification", "object_detection", "segmentation"],
+      "supports_instance_geometry": ["image_level", "bbox", "mask"],
+      "status": "dataset_specific",
       "aliases": ["object_fixed"]
     },
     {
       "canonical_name": "context.object_mobile",
       "display_name": "Mobile Object",
+      "parent_canonical_name": null,
+      "hierarchy_level": 1,
+      "is_leaf": true,
       "damage_family": "context_non_damage",
       "damage_subtype": "object_mobile",
       "role": "context",
+      "semantic_role": "non_road_context",
+      "training_role": "context",
+      "valid_tasks": ["classification", "object_detection", "segmentation"],
+      "supports_instance_geometry": ["image_level", "bbox", "mask"],
+      "status": "dataset_specific",
       "aliases": ["object_mobile"]
     },
     {
       "canonical_name": "context.surface_water_drain",
       "display_name": "Surface Water Drain",
+      "parent_canonical_name": null,
+      "hierarchy_level": 1,
+      "is_leaf": true,
       "damage_family": "context_non_damage",
       "damage_subtype": "surface_water_drain",
       "role": "context",
+      "semantic_role": "non_road_context",
+      "training_role": "context",
+      "valid_tasks": ["classification", "object_detection", "segmentation"],
+      "supports_instance_geometry": ["image_level", "bbox", "mask"],
+      "status": "dataset_specific",
       "aliases": ["surface_water_drain"]
     },
     {
       "canonical_name": "context.street_inventory",
       "display_name": "Street Inventory",
+      "parent_canonical_name": null,
+      "hierarchy_level": 1,
+      "is_leaf": true,
       "damage_family": "context_non_damage",
       "damage_subtype": "street_inventory",
       "role": "context",
+      "semantic_role": "non_road_context",
+      "training_role": "context",
+      "valid_tasks": ["classification", "object_detection", "segmentation"],
+      "supports_instance_geometry": ["image_level", "bbox", "mask"],
+      "status": "dataset_specific",
       "aliases": ["street_inventory"]
     },
     {
       "canonical_name": "class.negative",
       "display_name": "Negative",
-      "damage_family": "context_non_damage",
+      "parent_canonical_name": null,
+      "hierarchy_level": 1,
+      "is_leaf": true,
+      "damage_family": null,
       "damage_subtype": "negative",
       "role": "negative",
+      "semantic_role": "absence",
+      "training_role": "negative",
+      "valid_tasks": ["classification"],
+      "supports_instance_geometry": ["image_level"],
+      "task_notes": "Used as absence-of-target class rather than a physical road entity.",
+      "status": "stable",
       "aliases": ["non-cracked", "non cracked", "negative", "normal", "intact", "healthy"]
     },
     {
       "canonical_name": "background",
       "display_name": "Background",
-      "damage_family": "background",
+      "parent_canonical_name": null,
+      "hierarchy_level": 1,
+      "is_leaf": true,
+      "damage_family": null,
       "damage_subtype": "background",
       "role": "background",
-      "aliases": ["background", "bg", "void", "ignore", "unlabeled", "unknown"]
+      "semantic_role": "none",
+      "training_role": "background",
+      "valid_tasks": ["object_detection", "segmentation"],
+      "supports_instance_geometry": ["bbox", "mask"],
+      "status": "stable",
+      "aliases": ["background", "bg"]
+    },
+    {
+      "canonical_name": "class.ignore",
+      "display_name": "Ignore",
+      "parent_canonical_name": null,
+      "hierarchy_level": 1,
+      "is_leaf": true,
+      "damage_family": null,
+      "damage_subtype": "ignore",
+      "role": "ignore",
+      "semantic_role": "none",
+      "training_role": "ignore",
+      "valid_tasks": ["object_detection", "segmentation"],
+      "supports_instance_geometry": ["bbox", "mask"],
+      "status": "stable",
+      "aliases": ["ignore", "void", "dont care", "do not care"]
+    },
+    {
+      "canonical_name": "class.unlabeled",
+      "display_name": "Unlabeled",
+      "parent_canonical_name": null,
+      "hierarchy_level": 1,
+      "is_leaf": true,
+      "damage_family": null,
+      "damage_subtype": "unlabeled",
+      "role": "ignore",
+      "semantic_role": "unknown",
+      "training_role": "ignore",
+      "valid_tasks": ["object_detection", "segmentation"],
+      "supports_instance_geometry": ["bbox", "mask"],
+      "status": "provisional",
+      "aliases": ["unlabeled", "unlabelled", "missing annotation", "not labeled"]
+    },
+    {
+      "canonical_name": "class.unknown",
+      "display_name": "Unknown",
+      "parent_canonical_name": null,
+      "hierarchy_level": 1,
+      "is_leaf": true,
+      "damage_family": null,
+      "damage_subtype": "unknown",
+      "role": "unknown",
+      "semantic_role": "unknown",
+      "training_role": "ignore",
+      "valid_tasks": ["classification", "object_detection", "segmentation"],
+      "supports_instance_geometry": ["image_level", "bbox", "mask"],
+      "status": "provisional",
+      "aliases": ["unknown", "other", "miscellaneous"]
     }
-  ]
+  ],
+  "mapping_overrides": [
+    {
+      "source_label": "Sealed Longitudinal Crack",
+      "canonical_name": "crack.longitudinal",
+      "resolved_attributes": {
+        "treatment_state": "sealed"
+      },
+      "mapping_type": "normalized",
+      "mapping_confidence": "high",
+      "source_dataset_id": "*"
+    },
+    {
+      "source_label": "Sealed Reflective Crack",
+      "canonical_name": "crack.reflective",
+      "resolved_attributes": {
+        "treatment_state": "sealed"
+      },
+      "mapping_type": "normalized",
+      "mapping_confidence": "high",
+      "source_dataset_id": "*"
+    },
+    {
+      "source_label": "Sealed Block Crack",
+      "canonical_name": "crack.block",
+      "resolved_attributes": {
+        "treatment_state": "sealed"
+      },
+      "mapping_type": "normalized",
+      "mapping_confidence": "high",
+      "source_dataset_id": "*"
+    },
+    {
+      "source_label": "Sealed Transvers Cracks",
+      "canonical_name": "crack.transverse",
+      "resolved_attributes": {
+        "treatment_state": "sealed"
+      },
+      "mapping_type": "normalized",
+      "mapping_confidence": "high",
+      "source_dataset_id": "*"
+    },
+    {
+      "source_label": "Oblique crack",
+      "canonical_name": "crack.diagonal",
+      "mapping_type": "normalized",
+      "mapping_confidence": "high",
+      "source_dataset_id": "*"
+    }
+  ],
+  "dataset_codebooks": {
+    "rdd2022-object-detection": {
+      "mapping_source": "official codebook",
+      "mapping_review_status": "draft",
+      "mappings": {
+        "D00": {
+          "canonical_name": null,
+          "mapping_source": "pending official codebook linkage",
+          "mapping_review_status": "draft",
+          "mapping_confidence": "low"
+        },
+        "D01": {
+          "canonical_name": null,
+          "mapping_source": "pending official codebook linkage",
+          "mapping_review_status": "draft",
+          "mapping_confidence": "low"
+        },
+        "D0w0": {
+          "canonical_name": null,
+          "mapping_source": "pending official codebook linkage",
+          "mapping_review_status": "draft",
+          "mapping_confidence": "low"
+        },
+        "D10": {
+          "canonical_name": null,
+          "mapping_source": "pending official codebook linkage",
+          "mapping_review_status": "draft",
+          "mapping_confidence": "low"
+        },
+        "D11": {
+          "canonical_name": null,
+          "mapping_source": "pending official codebook linkage",
+          "mapping_review_status": "draft",
+          "mapping_confidence": "low"
+        },
+        "D20": {
+          "canonical_name": null,
+          "mapping_source": "pending official codebook linkage",
+          "mapping_review_status": "draft",
+          "mapping_confidence": "low"
+        },
+        "D40": {
+          "canonical_name": null,
+          "mapping_source": "pending official codebook linkage",
+          "mapping_review_status": "draft",
+          "mapping_confidence": "low"
+        },
+        "D43": {
+          "canonical_name": null,
+          "mapping_source": "pending official codebook linkage",
+          "mapping_review_status": "draft",
+          "mapping_confidence": "low"
+        },
+        "D44": {
+          "canonical_name": null,
+          "mapping_source": "pending official codebook linkage",
+          "mapping_review_status": "draft",
+          "mapping_confidence": "low"
+        },
+        "D50": {
+          "canonical_name": null,
+          "mapping_source": "pending official codebook linkage",
+          "mapping_review_status": "draft",
+          "mapping_confidence": "low"
+        }
+      }
+    }
+  }
 }

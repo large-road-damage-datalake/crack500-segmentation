@@ -114,22 +114,7 @@ def create_output_structure(output_dir):
 
 def copy_template_files(output_dir):
     """Copy template docs and scaffold into output package."""
-    script_dir = os.path.dirname(os.path.abspath(__file__))
-    candidates = [
-        os.path.normpath(os.path.join(script_dir, '..', 'template')),
-        os.path.normpath(os.path.join(script_dir, '..')),
-    ]
-
-    template_dir = None
-    for cand in candidates:
-        if os.path.isfile(os.path.join(cand, 'METADATA.json')) and os.path.isdir(os.path.join(cand, 'src')):
-            template_dir = cand
-            break
-
-    if not template_dir:
-        raise FileNotFoundError(
-            "Could not resolve template root. Expected METADATA.json and src/ near scripts/."
-        )
+    template_dir = os.path.join(os.path.dirname(__file__), '..', 'template')
 
     template_files = [
         '.gitignore',

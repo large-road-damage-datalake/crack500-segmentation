@@ -66,6 +66,18 @@ def _country_aliases(country_name):
     return {a for a in aliases if a}
 
 
+def _region_aliases(region_name):
+    base = _slugify_token(region_name)
+    aliases = {base, base.replace("_", "")}
+    parts = [p for p in base.split("_") if p]
+    if parts:
+        aliases.add(parts[0])
+        aliases.add(parts[-1])
+    if len(parts) >= 2:
+        aliases.add("_".join(parts[:2]))
+    return {a for a in aliases if a}
+
+
 def _build_country_lookup(config):
     lookup = {}
     countries = config.get("countries", []) if isinstance(config, dict) else []
@@ -84,6 +96,36 @@ def _build_country_lookup(config):
             "label": name,
             "aliases": _country_aliases(name),
         }
+    return lookup
+
+
+def _build_region_lookup(config):
+    lookup = {}
+    regions = config.get("regions", []) if isinstance(config, dict) else []
+    for item in regions or []:
+        if isinstance(item, dict):
+            name = str(item.get("name", "")).strip()
+        else:
+            name = str(item).strip()
+        if not name:
+            continue
+
+        rid = _slugify_token(name)
+        if not rid or rid == "all":
+            continue
+
+        aliases = _region_aliases(name)
+        if isinstance(item, dict):
+            extra_aliases = item.get("aliases", [])
+            if isinstance(extra_aliases, list):
+                aliases.update(_slugify_token(v) for v in extra_aliases if str(v).strip())
+
+        lookup[rid] = {
+            "id": rid,
+            "label": name,
+            "aliases": {a for a in aliases if a},
+        }
+
     return lookup
 
 
@@ -117,6 +159,38 @@ def _infer_country_id(split_name, split_cfg, country_lookup):
     if not best_country and len(country_lookup) == 1:
         return next(iter(country_lookup.keys()))
     return best_country
+
+
+def _infer_region_id(split_name, split_cfg, region_lookup):
+    if not region_lookup:
+        return None
+
+    img_root = ""
+    if isinstance(split_cfg, dict):
+        img_root = str(split_cfg.get("images_root", "") or "")
+
+    hay_parts = [
+        _slugify_token(split_name),
+        _slugify_token(os.path.basename(img_root)),
+        _slugify_token(os.path.basename(os.path.dirname(img_root))),
+    ]
+    hay = "_".join([p for p in hay_parts if p])
+    if not hay:
+        return None
+
+    best_region = None
+    best_len = -1
+    for rid, meta in region_lookup.items():
+        for alias in meta.get("aliases", []):
+            if not alias:
+                continue
+            if re.search(rf"(^|_){re.escape(alias)}(_|$)", hay):
+                if len(alias) > best_len:
+                    best_region = rid
+                    best_len = len(alias)
+    if not best_region and len(region_lookup) == 1:
+        return next(iter(region_lookup.keys()))
+    return best_region
 
 
 def _merge_split_stats(scoped_splits):
@@ -299,6 +373,46 @@ def _build_country_views(config, stats_data):
         scoped = _build_scoped_stats_data(stats_data, split_names)
         views[cid] = _build_view_payload(cid, meta.get("label", cid), split_names, scoped)
         view_order.append(cid)
+
+    return {
+        "version": 1,
+        "default_view": "all",
+        "view_order": view_order,
+        "views": views,
+    }
+
+
+def _build_region_views(config, stats_data):
+    splits_stats = stats_data.get("splits", {}) or {}
+    resolved_split_map = {s.get("name"): s for s in _resolved_splits(config)}
+    region_lookup = _build_region_lookup(config)
+
+    if not region_lookup:
+        return None
+
+    groups = defaultdict(list)
+    for split_name in splits_stats.keys():
+        rid = _infer_region_id(split_name, resolved_split_map.get(split_name, {}), region_lookup)
+        if rid:
+            groups[rid].append(split_name)
+
+    all_split_names = sorted(list(splits_stats.keys()))
+    all_stats = _build_scoped_stats_data(stats_data, all_split_names)
+    views = {
+        "all": _build_view_payload("all", "All", all_split_names, all_stats)
+    }
+    view_order = ["all"]
+
+    for rid, meta in region_lookup.items():
+        split_names = sorted(groups.get(rid, []))
+        if not split_names:
+            continue
+        scoped = _build_scoped_stats_data(stats_data, split_names)
+        views[rid] = _build_view_payload(rid, meta.get("label", rid), split_names, scoped)
+        view_order.append(rid)
+
+    if len(view_order) <= 1:
+        return None
 
     return {
         "version": 1,
@@ -2082,6 +2196,56 @@ def _attach_country_view_assets(config, output_dir, stats_data, country_views, a
         view["spatial_heatmaps"] = spatial_meta
 
 
+def _attach_region_view_assets(config, output_dir, stats_data, region_views, all_sample_count, all_slider_pairs, all_spatial_meta):
+    views = region_views.get("views", {}) if isinstance(region_views, dict) else {}
+    view_order = region_views.get("view_order", []) if isinstance(region_views, dict) else []
+
+    if "all" in views:
+        views["all"]["samples_summary"] = {
+            "sample_count": all_sample_count,
+            "slider_pairs": all_slider_pairs,
+            "samples_dir": "visualizations/samples",
+            "samples_manifest": "visualizations/samples/samples_manifest.json",
+            "sample_annotations_dir": "visualizations/samples/annotations",
+        }
+        views["all"]["spatial_heatmaps"] = all_spatial_meta
+
+    for view_id in view_order:
+        if view_id == "all":
+            continue
+        view = views.get(view_id)
+        if not isinstance(view, dict):
+            continue
+
+        split_names = view.get("split_names", [])
+        scoped_stats = _build_scoped_stats_data(stats_data, split_names)
+
+        samples_rel = f"visualizations/region_views/{view_id}/samples"
+        spatial_rel = f"visualizations/region_views/{view_id}/spatial_heatmaps"
+
+        sample_count, slider_pairs = _build_preview_assets(
+            config,
+            output_dir,
+            scoped_stats,
+            samples_rel_dir=samples_rel,
+            fast_selection=True,
+        )
+        spatial_meta = _build_spatial_heatmaps(
+            scoped_stats,
+            output_dir,
+            relative_dir=spatial_rel,
+        )
+
+        view["samples_summary"] = {
+            "sample_count": sample_count,
+            "slider_pairs": slider_pairs,
+            "samples_dir": samples_rel,
+            "samples_manifest": f"{samples_rel}/samples_manifest.json",
+            "sample_annotations_dir": f"{samples_rel}/annotations",
+        }
+        view["spatial_heatmaps"] = spatial_meta
+
+
 def build_artifacts(config, output_dir, stats_data):
     stats_dir = os.path.join(output_dir, "stats")
     _safe_makedirs(stats_dir)
@@ -2145,6 +2309,35 @@ def build_artifacts(config, output_dir, stats_data):
         if os.path.isdir(country_views_dir):
             try:
                 shutil.rmtree(country_views_dir)
+            except Exception:
+                pass
+
+    region_views = _build_region_views(config, stats_data)
+    region_views_path = os.path.join(stats_dir, "region_views.json")
+    region_views_dir = os.path.join(output_dir, "visualizations", "region_views")
+    if region_views:
+        _attach_region_view_assets(
+            config,
+            output_dir,
+            stats_data,
+            region_views,
+            all_sample_count=sample_count,
+            all_slider_pairs=slider_pairs,
+            all_spatial_meta=spatial_meta,
+        )
+        _write_json(region_views_path, region_views)
+        stats_manifest["artifacts"].append(
+            {"name": "region_views", "file": "stats/region_views.json", "type": "drilldown"}
+        )
+    else:
+        if os.path.isfile(region_views_path):
+            try:
+                os.remove(region_views_path)
+            except Exception:
+                pass
+        if os.path.isdir(region_views_dir):
+            try:
+                shutil.rmtree(region_views_dir)
             except Exception:
                 pass
 

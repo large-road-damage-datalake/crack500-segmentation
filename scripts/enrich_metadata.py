@@ -14,6 +14,81 @@ from pathlib import Path
 from task_classification import resolve_task_classification
 
 
+_GENERIC_CONTEXT_CANONICALS = {
+    'context.object_fixed',
+    'context.object_mobile',
+    'context.street_inventory',
+}
+
+_ROLE_TO_SEMANTIC_ROLE = {
+    'damage_target': 'damage',
+    'positive': 'damage',
+    'repair': 'repair',
+    'context': 'road_feature',
+    'negative': 'absence',
+    'background': 'none',
+    'ignore': 'none',
+    'unknown': 'unknown',
+    'code_legacy': 'unknown',
+}
+
+_ROLE_TO_TRAINING_ROLE = {
+    'damage_target': 'target',
+    'positive': 'target',
+    'repair': 'context',
+    'context': 'context',
+    'negative': 'negative',
+    'background': 'background',
+    'ignore': 'ignore',
+    'unknown': 'ignore',
+    'code_legacy': 'ignore',
+}
+
+
+def _derive_semantic_role(role, canonical_name=''):
+    role_norm = str(role or '').strip().lower()
+    canonical = str(canonical_name or '').strip().lower()
+    if role_norm in _ROLE_TO_SEMANTIC_ROLE:
+        return _ROLE_TO_SEMANTIC_ROLE[role_norm]
+    if canonical == 'background':
+        return 'none'
+    if canonical in {'ignore', 'unlabeled'}:
+        return 'none'
+    if canonical.startswith('unknown.'):
+        return 'unknown'
+    if canonical.startswith('class.negative'):
+        return 'absence'
+    if canonical.startswith('context.'):
+        return 'road_feature'
+    if canonical.startswith('repair.') or canonical.startswith('patch.'):
+        return 'repair'
+    if canonical.startswith('crack') or canonical.startswith('pothole') or canonical.startswith('damage.'):
+        return 'damage'
+    return 'unknown'
+
+
+def _derive_training_role(role, canonical_name=''):
+    role_norm = str(role or '').strip().lower()
+    canonical = str(canonical_name or '').strip().lower()
+    if role_norm in _ROLE_TO_TRAINING_ROLE:
+        return _ROLE_TO_TRAINING_ROLE[role_norm]
+    if canonical == 'background':
+        return 'background'
+    if canonical in {'ignore', 'unlabeled'}:
+        return 'ignore'
+    if canonical.startswith('unknown.'):
+        return 'ignore'
+    if canonical.startswith('class.negative'):
+        return 'negative'
+    if canonical.startswith('context.'):
+        return 'context'
+    if canonical.startswith('repair.') or canonical.startswith('patch.'):
+        return 'context'
+    if canonical.startswith('crack') or canonical.startswith('pothole') or canonical.startswith('damage.'):
+        return 'target'
+    return 'ignore'
+
+
 def _slugify_token(value):
     return re.sub(r"[^a-z0-9]+", "_", str(value or "").lower()).strip("_")
 
@@ -202,6 +277,68 @@ def _normalize_codebook(codebook):
     return out
 
 
+def _normalize_mapping_overrides(registry):
+    overrides = registry.get('mapping_overrides', []) if isinstance(registry, dict) else []
+    if not isinstance(overrides, list):
+        return {}
+
+    out = {}
+    for item in overrides:
+        if not isinstance(item, dict):
+            continue
+
+        source_label = str(item.get('source_label', '')).strip()
+        canonical_name = str(item.get('canonical_name', '')).strip()
+        if not source_label or not canonical_name:
+            continue
+
+        key = _norm_label_key(source_label)
+        if not key:
+            continue
+
+        dataset_id = str(item.get('source_dataset_id', '*') or '*').strip() or '*'
+        rec = {
+            'canonical_name': canonical_name,
+            'source_dataset_id': dataset_id,
+            'resolved_attributes': item.get('resolved_attributes', {}),
+            'mapping_type': str(item.get('mapping_type', '')).strip() or 'normalized',
+            'mapping_confidence': str(item.get('mapping_confidence', '')).strip() or 'medium',
+            'mapping_note': str(item.get('mapping_note', '')).strip(),
+            'mapping_status': str(item.get('status', '') or item.get('mapping_status', '')).strip(),
+        }
+        out.setdefault(key, []).append(rec)
+
+    return out
+
+
+def _select_mapping_override(source_name, dataset_id, mapping_override_lookup):
+    if not isinstance(mapping_override_lookup, dict) or not mapping_override_lookup:
+        return None
+
+    key = _norm_label_key(source_name)
+    if not key:
+        return None
+
+    candidates = mapping_override_lookup.get(key, [])
+    if not candidates:
+        return None
+
+    dsid = str(dataset_id or '').strip().lower()
+
+    if dsid:
+        for item in candidates:
+            src = str(item.get('source_dataset_id', '')).strip().lower()
+            if src and src == dsid:
+                return item
+
+    for item in candidates:
+        src = str(item.get('source_dataset_id', '')).strip()
+        if src in {'*', ''}:
+            return item
+
+    return candidates[0]
+
+
 def _description_candidates(description):
     text = str(description or '').strip()
     if not text:
@@ -256,11 +393,139 @@ def _resolve_codebook_mapping(label, codebook_norm):
     return codebook_norm.get(key)
 
 
+def _specialize_generic_context_mapping(canonical_name, source_name, canonical_info):
+    canonical = str(canonical_name or '').strip()
+    source = str(source_name or '').strip()
+    if not source or canonical not in _GENERIC_CONTEXT_CANONICALS:
+        return canonical, canonical_info, False
+
+    source_slug = _slugify_token(source) or 'object'
+    info = dict(canonical_info or {})
+    aliases = [str(a).strip() for a in (info.get('aliases') or []) if str(a).strip()]
+    if source not in aliases:
+        aliases.append(source)
+
+    info['display_name'] = _display_label(source)
+    info['damage_family'] = str(info.get('damage_family') or 'context_non_damage')
+    info['damage_subtype'] = source_slug
+    info['role'] = str(info.get('role') or 'context')
+    info['aliases'] = aliases
+    return f'context.{source_slug}', info, True
+
+
+def _infer_taxonomy_from_source_label(source_name):
+    source = str(source_name or '').strip()
+    if not source:
+        return None
+
+    norm = _norm_label_key(source)
+    slug = _slugify_token(source) or 'label'
+    display = _display_label(source)
+
+    if _is_negative_class_label(source):
+        return {
+            'canonical_name': 'class.negative',
+            'display_name': display,
+            'damage_family': 'context_non_damage',
+            'damage_subtype': 'negative',
+            'role': 'negative',
+            'aliases': [source],
+            'qualifiers': [],
+            'taxonomy_source': 'heuristic',
+            'taxonomy_unresolved': False,
+        }
+
+    if any(tok in norm for tok in ('patch', 'repair', 'sealed')):
+        subtype = 'sealed' if 'sealed' in norm else 'generic'
+        canonical = 'repair.general' if subtype == 'generic' else f'repair.{subtype}'
+        return {
+            'canonical_name': canonical,
+            'display_name': display,
+            'damage_family': 'patch_repair',
+            'damage_subtype': subtype,
+            'role': 'repair',
+            'aliases': [source],
+            'qualifiers': [],
+            'taxonomy_source': 'heuristic',
+            'taxonomy_unresolved': False,
+        }
+
+    if 'pothole' in norm:
+        return {
+            'canonical_name': 'pothole',
+            'display_name': display,
+            'damage_family': 'pothole',
+            'damage_subtype': 'generic',
+            'role': 'damage_target',
+            'aliases': [source],
+            'qualifiers': [],
+            'taxonomy_source': 'heuristic',
+            'taxonomy_unresolved': False,
+        }
+
+    if 'crack' in norm:
+        subtype = 'generic'
+        for token, mapped in (
+            ('alligator', 'alligator'),
+            ('longitudinal', 'longitudinal'),
+            ('transverse', 'transverse'),
+            ('diagonal', 'diagonal'),
+            ('block', 'block'),
+            ('reflective', 'reflective'),
+        ):
+            if token in norm:
+                subtype = mapped
+                break
+        canonical = 'crack' if subtype == 'generic' else f'crack.{subtype}'
+        return {
+            'canonical_name': canonical,
+            'display_name': display,
+            'damage_family': 'crack',
+            'damage_subtype': subtype,
+            'role': 'damage_target',
+            'aliases': [source],
+            'qualifiers': [],
+            'taxonomy_source': 'heuristic',
+            'taxonomy_unresolved': False,
+        }
+
+    if any(tok in norm for tok in ('damage', 'defect', 'distress', 'rut', 'ravel', 'depression', 'bleeding')):
+        return {
+            'canonical_name': f'damage.{slug}',
+            'display_name': display,
+            'damage_family': 'surface_distress',
+            'damage_subtype': slug,
+            'role': 'damage_target',
+            'aliases': [source],
+            'qualifiers': [],
+            'taxonomy_source': 'heuristic',
+            'taxonomy_unresolved': False,
+        }
+
+    if any(tok in norm for tok in ('manhole', 'cover', 'drain', 'curb', 'marking', 'vegetation', 'joint', 'pole', 'sign')):
+        return {
+            'canonical_name': f'context.{slug}',
+            'display_name': display,
+            'damage_family': 'context_non_damage',
+            'damage_subtype': slug,
+            'role': 'context',
+            'aliases': [source],
+            'qualifiers': [],
+            'taxonomy_source': 'heuristic',
+            'taxonomy_unresolved': False,
+        }
+
+    return None
+
+
 def _build_resolved_entry(canonical_name, canonical_info, taxonomy_source):
     canonical_info = canonical_info or {}
     display_name = str(canonical_info.get('display_name') or _display_label(canonical_name))
     damage_family = str(canonical_info.get('damage_family') or 'unknown')
     role = str(canonical_info.get('role') or 'unknown')
+    semantic_role = str(canonical_info.get('semantic_role') or _derive_semantic_role(role, canonical_name))
+    training_role = str(canonical_info.get('training_role') or _derive_training_role(role, canonical_name))
+    class_status = str(canonical_info.get('status') or ('provisional' if role in {'unknown', 'code_legacy'} else 'stable'))
 
     aliases = [str(a).strip() for a in (canonical_info.get('aliases') or []) if str(a).strip()]
     subtype = canonical_info.get('damage_subtype')
@@ -268,20 +533,42 @@ def _build_resolved_entry(canonical_name, canonical_info, taxonomy_source):
     if not isinstance(qualifiers, list):
         qualifiers = []
 
-    return {
+    resolved = {
         'canonical_name': canonical_name,
         'display_name': display_name,
         'damage_family': damage_family,
         'damage_subtype': str(subtype).strip() if subtype is not None else '',
         'role': role,
+        'semantic_role': semantic_role,
+        'training_role': training_role,
+        'status': class_status,
         'aliases': aliases,
         'qualifiers': [str(q).strip() for q in qualifiers if str(q).strip()],
         'taxonomy_source': taxonomy_source,
         'taxonomy_unresolved': role in {'unknown', 'code_legacy'},
     }
 
+    resolved_attrs = canonical_info.get('resolved_attributes')
+    if isinstance(resolved_attrs, dict) and resolved_attrs:
+        resolved['resolved_attributes'] = resolved_attrs
 
-def _resolve_taxonomy_for_label(name, description, codebook_norm, alias_lookup, canonical_by_name):
+    for field in ('mapping_type', 'mapping_confidence', 'mapping_note', 'mapping_status'):
+        val = str(canonical_info.get(field, '')).strip()
+        if val:
+            resolved[field] = val
+
+    return resolved
+
+
+def _resolve_taxonomy_for_label(
+    name,
+    description,
+    codebook_norm,
+    alias_lookup,
+    canonical_by_name,
+    mapping_override_lookup=None,
+    dataset_id='',
+):
     source_name = str(name or '').strip()
 
     codebook_value = _resolve_codebook_mapping(source_name, codebook_norm)
@@ -289,6 +576,11 @@ def _resolve_taxonomy_for_label(name, description, codebook_norm, alias_lookup, 
         if isinstance(codebook_value, str):
             canonical_name = codebook_value.strip()
             info = canonical_by_name.get(canonical_name, {})
+            canonical_name, info, specialized = _specialize_generic_context_mapping(
+                canonical_name,
+                source_name,
+                info,
+            )
             if not info:
                 info = {
                     'display_name': _display_label(canonical_name),
@@ -296,7 +588,14 @@ def _resolve_taxonomy_for_label(name, description, codebook_norm, alias_lookup, 
                     'role': 'unknown',
                     'aliases': [source_name],
                 }
-            return _build_resolved_entry(canonical_name, info, 'codebook')
+            resolved = _build_resolved_entry(
+                canonical_name,
+                info,
+                'codebook_specialized' if specialized else 'codebook',
+            )
+            resolved.setdefault('mapping_type', 'codebook-based')
+            resolved.setdefault('mapping_confidence', 'high')
+            return resolved
 
         if isinstance(codebook_value, dict):
             canonical_name = str(codebook_value.get('canonical_name', '')).strip()
@@ -307,7 +606,43 @@ def _resolve_taxonomy_for_label(name, description, codebook_norm, alias_lookup, 
                 canonical = f"unknown.{_slugify_token(source_name) or 'label'}"
             merged.setdefault('display_name', _display_label(source_name))
             merged.setdefault('aliases', [source_name])
+            merged.setdefault('mapping_type', 'codebook-based')
+            merged.setdefault('mapping_confidence', 'high')
             return _build_resolved_entry(canonical, merged, 'codebook')
+
+    override = _select_mapping_override(source_name, dataset_id, mapping_override_lookup)
+    if override is not None:
+        canonical_name = str(override.get('canonical_name', '')).strip()
+        info = canonical_by_name.get(canonical_name, {})
+        canonical_name, info, specialized = _specialize_generic_context_mapping(
+            canonical_name,
+            source_name,
+            info,
+        )
+        if not info:
+            info = {
+                'display_name': _display_label(canonical_name),
+                'damage_family': 'unknown',
+                'role': 'unknown',
+                'aliases': [source_name],
+            }
+        resolved = _build_resolved_entry(
+            canonical_name,
+            info,
+            'registry_override_specialized' if specialized else 'registry_override',
+        )
+        attrs = override.get('resolved_attributes')
+        if isinstance(attrs, dict) and attrs:
+            resolved['resolved_attributes'] = attrs
+        resolved['mapping_type'] = str(override.get('mapping_type') or 'normalized')
+        resolved['mapping_confidence'] = str(override.get('mapping_confidence') or 'medium')
+        mapping_note = str(override.get('mapping_note', '')).strip()
+        if mapping_note:
+            resolved['mapping_note'] = mapping_note
+        mapping_status = str(override.get('mapping_status', '')).strip()
+        if mapping_status:
+            resolved['mapping_status'] = mapping_status
+        return resolved
 
     canonical_name = _lookup_registry_match(source_name, alias_lookup)
     if canonical_name:
@@ -316,7 +651,11 @@ def _resolve_taxonomy_for_label(name, description, codebook_norm, alias_lookup, 
     if _is_code_label(source_name):
         desc_match = _resolve_from_description(description, alias_lookup)
         if desc_match:
-            return _build_resolved_entry(desc_match, canonical_by_name.get(desc_match, {}), 'description')
+            resolved = _build_resolved_entry(desc_match, canonical_by_name.get(desc_match, {}), 'description')
+            resolved.setdefault('mapping_type', 'inferred')
+            resolved.setdefault('mapping_confidence', 'medium')
+            resolved.setdefault('mapping_note', 'Resolved from class description text')
+            return resolved
 
         fallback_code = _slugify_token(source_name)
         return {
@@ -325,11 +664,29 @@ def _resolve_taxonomy_for_label(name, description, codebook_norm, alias_lookup, 
             'damage_family': 'unknown',
             'damage_subtype': '',
             'role': 'code_legacy',
+            'semantic_role': 'unknown',
+            'training_role': 'ignore',
+            'status': 'dataset_specific',
             'aliases': [source_name],
             'qualifiers': [],
             'taxonomy_source': 'fallback_code',
             'taxonomy_unresolved': True,
+            'mapping_type': 'lossy',
+            'mapping_confidence': 'low',
+            'mapping_note': 'Unresolved opaque code label; dataset codebook required',
+            'mapping_status': 'draft',
         }
+
+    heuristic = _infer_taxonomy_from_source_label(source_name)
+    if heuristic is not None:
+        role = str(heuristic.get('role', '')).strip()
+        canonical = str(heuristic.get('canonical_name', '')).strip()
+        heuristic.setdefault('semantic_role', _derive_semantic_role(role, canonical))
+        heuristic.setdefault('training_role', _derive_training_role(role, canonical))
+        heuristic.setdefault('status', 'provisional')
+        heuristic.setdefault('mapping_type', 'inferred')
+        heuristic.setdefault('mapping_confidence', 'medium')
+        return heuristic
 
     return {
         'canonical_name': f"unknown.{_slugify_token(source_name) or 'label'}",
@@ -337,10 +694,17 @@ def _resolve_taxonomy_for_label(name, description, codebook_norm, alias_lookup, 
         'damage_family': 'unknown',
         'damage_subtype': '',
         'role': 'unknown',
+        'semantic_role': 'unknown',
+        'training_role': 'ignore',
+        'status': 'dataset_specific',
         'aliases': [source_name],
         'qualifiers': [],
         'taxonomy_source': 'fallback_unknown',
         'taxonomy_unresolved': True,
+        'mapping_type': 'lossy',
+        'mapping_confidence': 'low',
+        'mapping_note': 'No deterministic alias or codebook mapping found',
+        'mapping_status': 'draft',
     }
 
 
@@ -449,7 +813,9 @@ def _normalize_class_taxonomy(metadata, class_distribution, config):
 
     registry = _load_taxonomy_registry()
     alias_lookup, canonical_by_name = _build_taxonomy_lookup(registry)
+    mapping_override_lookup = _normalize_mapping_overrides(registry)
     codebook_norm = _normalize_codebook(config.get('label_codebook', {}) if isinstance(config, dict) else {})
+    dataset_id = str((config or {}).get('dataset_id', '') if isinstance(config, dict) else '').strip()
 
     normalized = []
     taxonomy_records = []
@@ -474,6 +840,8 @@ def _normalize_class_taxonomy(metadata, class_distribution, config):
             codebook_norm=codebook_norm,
             alias_lookup=alias_lookup,
             canonical_by_name=canonical_by_name,
+            mapping_override_lookup=mapping_override_lookup,
+            dataset_id=dataset_id,
         )
 
         entry = dict(src)
@@ -484,9 +852,17 @@ def _normalize_class_taxonomy(metadata, class_distribution, config):
             'damage_subtype',
             'qualifiers',
             'role',
+            'semantic_role',
+            'training_role',
+            'status',
             'is_damage_target',
             'taxonomy_source',
             'taxonomy_unresolved',
+            'mapping_type',
+            'mapping_confidence',
+            'mapping_note',
+            'mapping_status',
+            'resolved_attributes',
             'aliases',
         ):
             entry.pop(field, None)
@@ -501,9 +877,27 @@ def _normalize_class_taxonomy(metadata, class_distribution, config):
         )
         damage_subtype = str(resolved.get('damage_subtype') or src.get('damage_subtype') or '').strip()
         role = str(resolved.get('role') or src.get('role') or 'unknown')
+        semantic_role = str(
+            resolved.get('semantic_role')
+            or src.get('semantic_role')
+            or _derive_semantic_role(role, canonical_name)
+        )
+        training_role = str(
+            resolved.get('training_role')
+            or src.get('training_role')
+            or _derive_training_role(role, canonical_name)
+        )
+        class_status = str(
+            resolved.get('status')
+            or src.get('status')
+            or ('provisional' if role in {'unknown', 'code_legacy'} else 'stable')
+        )
         taxonomy_source = str(resolved.get('taxonomy_source') or src.get('taxonomy_source') or 'fallback_unknown')
         taxonomy_unresolved = bool(resolved.get('taxonomy_unresolved', src.get('taxonomy_unresolved', False)))
         aliases = _merge_aliases(src.get('aliases', []), resolved.get('aliases', []), [name])
+        is_damage_target = bool(
+            (semantic_role == 'damage' and training_role == 'target') or role == 'damage_target'
+        )
 
         entry['id'] = class_id
         entry['name'] = name
@@ -523,7 +917,10 @@ def _normalize_class_taxonomy(metadata, class_distribution, config):
             'display_name': display_name,
             'damage_family': damage_family,
             'role': role,
-            'is_damage_target': bool(role == 'damage_target'),
+            'semantic_role': semantic_role,
+            'training_role': training_role,
+            'status': class_status,
+            'is_damage_target': is_damage_target,
             'aliases': aliases,
             'source_label': name,
             'taxonomy_source': taxonomy_source,
@@ -531,6 +928,21 @@ def _normalize_class_taxonomy(metadata, class_distribution, config):
         }
         if damage_subtype:
             taxonomy_record['damage_subtype'] = damage_subtype
+        resolved_attrs = resolved.get('resolved_attributes')
+        if isinstance(resolved_attrs, dict) and resolved_attrs:
+            taxonomy_record['resolved_attributes'] = resolved_attrs
+        mapping_type = str(resolved.get('mapping_type', '')).strip()
+        if mapping_type:
+            taxonomy_record['mapping_type'] = mapping_type
+        mapping_confidence = str(resolved.get('mapping_confidence', '')).strip()
+        if mapping_confidence:
+            taxonomy_record['mapping_confidence'] = mapping_confidence
+        mapping_note = str(resolved.get('mapping_note', '')).strip()
+        if mapping_note:
+            taxonomy_record['mapping_note'] = mapping_note
+        mapping_status = str(resolved.get('mapping_status', '')).strip()
+        if mapping_status:
+            taxonomy_record['mapping_status'] = mapping_status
         taxonomy_records.append(taxonomy_record)
 
         normalized.append(entry)
@@ -543,8 +955,15 @@ def _normalize_class_taxonomy(metadata, class_distribution, config):
     taxonomy_agg = {}
     for cls in taxonomy_records:
         role = str(cls.get('role', '')).strip().lower()
+        semantic_role = str(cls.get('semantic_role', '')).strip().lower()
+        training_role = str(cls.get('training_role', '')).strip().lower()
         fam = str(cls.get('damage_family', '')).strip()
-        if role == 'damage_target' and fam and fam not in damage_types and fam != 'unknown':
+        if (
+            ((semantic_role == 'damage' and training_role == 'target') or role == 'damage_target')
+            and fam
+            and fam not in damage_types
+            and fam != 'unknown'
+        ):
             damage_types.append(fam)
 
         canonical = str(cls.get('canonical_name', '')).strip()
@@ -558,6 +977,9 @@ def _normalize_class_taxonomy(metadata, class_distribution, config):
                 'damage_family': fam,
                 'damage_subtype': cls.get('damage_subtype', ''),
                 'role': cls.get('role'),
+                'semantic_role': cls.get('semantic_role'),
+                'training_role': cls.get('training_role'),
+                'status': cls.get('status'),
                 'is_damage_target': bool(cls.get('is_damage_target')),
                 'aliases': [],
                 'source_labels': [],
@@ -573,8 +995,24 @@ def _normalize_class_taxonomy(metadata, class_distribution, config):
             agg['damage_subtype'] = cls.get('damage_subtype')
         if not agg.get('role') and cls.get('role'):
             agg['role'] = cls.get('role')
+        if not agg.get('semantic_role') and cls.get('semantic_role'):
+            agg['semantic_role'] = cls.get('semantic_role')
+        if not agg.get('training_role') and cls.get('training_role'):
+            agg['training_role'] = cls.get('training_role')
+        if not agg.get('status') and cls.get('status'):
+            agg['status'] = cls.get('status')
         if not agg.get('taxonomy_source') and cls.get('taxonomy_source'):
             agg['taxonomy_source'] = cls.get('taxonomy_source')
+        if not agg.get('mapping_type') and cls.get('mapping_type'):
+            agg['mapping_type'] = cls.get('mapping_type')
+        if not agg.get('mapping_confidence') and cls.get('mapping_confidence'):
+            agg['mapping_confidence'] = cls.get('mapping_confidence')
+        if not agg.get('mapping_note') and cls.get('mapping_note'):
+            agg['mapping_note'] = cls.get('mapping_note')
+        if not agg.get('mapping_status') and cls.get('mapping_status'):
+            agg['mapping_status'] = cls.get('mapping_status')
+        if not agg.get('resolved_attributes') and isinstance(cls.get('resolved_attributes'), dict):
+            agg['resolved_attributes'] = cls.get('resolved_attributes')
         agg['aliases'] = _merge_aliases(agg.get('aliases', []), cls.get('aliases', []))
         agg['source_labels'] = _merge_aliases(agg.get('source_labels', []), [cls.get('source_label', '')])
         agg['taxonomy_unresolved'] = bool(agg.get('taxonomy_unresolved') or cls.get('taxonomy_unresolved'))
