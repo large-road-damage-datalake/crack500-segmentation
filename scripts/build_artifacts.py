@@ -91,10 +91,15 @@ def _build_country_lookup(config):
         cid = _slugify_token(name)
         if not cid:
             continue
+        aliases = _country_aliases(name)
+        if isinstance(item, dict):
+            extra_aliases = item.get("aliases", [])
+            if isinstance(extra_aliases, list):
+                aliases.update(_slugify_token(v) for v in extra_aliases if str(v).strip())
         lookup[cid] = {
             "id": cid,
             "label": name,
-            "aliases": _country_aliases(name),
+            "aliases": {a for a in aliases if a},
         }
     return lookup
 
@@ -311,6 +316,7 @@ def _build_view_payload(view_id, label, split_names, scoped_stats_data):
     g = scoped_stats_data.get("global", {})
     n_images = int(g.get("num_images", 0))
     n_images_with_annotations = int(g.get("num_images_with_annotations", 0))
+    class_distribution = dict(g.get("class_distribution", {}) or {})
     res_hist = g.get("image_resolution_histogram", {}) or {}
     res_details = [
         {"resolution": str(k), "count": int(v)}
@@ -327,9 +333,9 @@ def _build_view_payload(view_id, label, split_names, scoped_stats_data):
             "num_annotations": int(g.get("num_annotations", 0)),
             "num_images_with_annotations": n_images_with_annotations,
             "num_images_without_annotations": max(0, n_images - n_images_with_annotations),
-            "num_classes": int(g.get("num_classes", 0)),
+            "num_classes": len(class_distribution),
             "annotation_coverage": round(float(g.get("annotation_coverage", 0.0)), 6),
-            "class_distribution": g.get("class_distribution", {}),
+            "class_distribution": class_distribution,
             "resolutions": res_list,
             "resolution_details": res_details,
         },
@@ -778,7 +784,13 @@ def _find_sample_annotation_info(sample_src, config, splits, coco_cache):
     if fmt == "yolo" and split:
         txt_path = os.path.join(split.get("annotations", ""), basename + ".txt")
         if os.path.isfile(txt_path):
-            return {"mode": "bbox", "format": "yolo", "source_path": txt_path}
+            return {
+                "mode": "bbox",
+                "format": "yolo",
+                "source_path": txt_path,
+                "class_map": dict(split.get("class_map", {}) or {}),
+                "class_exclude": list(split.get("class_exclude", []) or []),
+            }
 
     if fmt == "coco" and split:
         coco_path = split.get("annotations", "")
@@ -821,6 +833,7 @@ def _find_sample_annotation_info(sample_src, config, splits, coco_cache):
                         "source_path": mp,
                         "class_map": dict(split.get("class_map", {}) or {}),
                         "class_exclude": list(split.get("class_exclude", []) or []),
+                        "min_component_area_px": split.get("min_component_area_px", 1),
                     }
 
     return None
@@ -1113,7 +1126,14 @@ def _copy_or_scale_yolo_annotation(src_txt, dst_txt):
         return False
 
 
-def _mask_to_polygons(mask_path, out_json_path, target_size, class_map=None, class_exclude=None):
+def _mask_to_polygons(
+    mask_path,
+    out_json_path,
+    target_size,
+    class_map=None,
+    class_exclude=None,
+    min_component_area_px=1,
+):
     """Convert indexed mask classes to pixel-precise polygon JSON without OpenCV dependency."""
     try:
         import numpy as np
@@ -1163,6 +1183,12 @@ def _mask_to_polygons(mask_path, out_json_path, target_size, class_map=None, cla
         return None
 
     excluded = {str(v).strip() for v in (class_exclude or []) if str(v).strip()}
+    try:
+        min_component_area_px = int(min_component_area_px)
+    except Exception:
+        min_component_area_px = 1
+    if min_component_area_px < 1:
+        min_component_area_px = 1
 
     def _infer_foreground_values(mask_array, cmap, cexclude):
         vals, counts = np.unique(mask_array, return_counts=True)
@@ -1471,6 +1497,8 @@ def _mask_to_polygons(mask_path, out_json_path, target_size, class_map=None, cla
                     stack.append((ny, nx))
 
             if len(component) < 1:
+                continue
+            if len(component) < min_component_area_px:
                 continue
 
             boundaries = _trace_component_boundaries(component)
@@ -2102,6 +2130,7 @@ def _build_preview_assets(config, output_dir, stats_data, samples_rel_dir="visua
                         target_size=(new_w, new_h) if new_w and new_h else None,
                         class_map=ann_info.get("class_map"),
                         class_exclude=ann_info.get("class_exclude"),
+                        min_component_area_px=ann_info.get("min_component_area_px", 1),
                     ):
                         ann_copy_name = None
 
@@ -2114,6 +2143,7 @@ def _build_preview_assets(config, output_dir, stats_data, samples_rel_dir="visua
                 entry["annotation_file"] = (
                     f"annotations/{ann_copy_name}".replace("\\", "/") if ann_copy_name else None
                 )
+                entry["class_map"] = dict(ann_info.get("class_map", {}) or {})
                 entry["slider_ready"] = bool(ann_copy_name)
                 if ann_copy_name:
                     slider_pairs += 1

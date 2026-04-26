@@ -1,13 +1,65 @@
 {
   "total_images": 494,
-  "total_annotations": 5040,
+  "total_annotations": 3200,
   "total_classes": 1,
+  "annotated_images": 494,
+  "annotation_coverage": 1.0,
+  "image_resolution_histogram": {
+    "1440x2560": 16,
+    "2448x3168": 1,
+    "2448x3180": 1,
+    "2560x1440": 413,
+    "2592x1904": 1,
+    "2592x1936": 26,
+    "3264x2448": 36
+  },
+  "resolution_details": [
+    {
+      "resolution": "1440x2560",
+      "count": 16
+    },
+    {
+      "resolution": "2448x3168",
+      "count": 1
+    },
+    {
+      "resolution": "2448x3180",
+      "count": 1
+    },
+    {
+      "resolution": "2560x1440",
+      "count": 413
+    },
+    {
+      "resolution": "2592x1904",
+      "count": 1
+    },
+    {
+      "resolution": "2592x1936",
+      "count": 26
+    },
+    {
+      "resolution": "3264x2448",
+      "count": 36
+    }
+  ],
   "splits_breakdown": {
     "data": {
       "images": 494,
-      "annotations": 5040,
+      "annotations": 3200,
+      "annotated_images": 494,
+      "annotation_coverage": 1.0,
       "classes": {
-        "crack": 5040
+        "crack": 3200
+      },
+      "image_resolution_histogram": {
+        "1440x2560": 16,
+        "2448x3168": 1,
+        "2448x3180": 1,
+        "2560x1440": 413,
+        "2592x1904": 1,
+        "2592x1936": 26,
+        "3264x2448": 36
       }
     }
   }

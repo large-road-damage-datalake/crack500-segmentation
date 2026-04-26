@@ -67,6 +67,38 @@ def _collect_images(images_root):
     return sorted(images)
 
 
+def _map_detection_class(raw_value, class_map, class_exclude):
+    raw_str = str(raw_value)
+
+    if raw_value in class_exclude or raw_str in class_exclude:
+        return None
+
+    candidates = [raw_value, raw_str]
+    if isinstance(raw_value, str) and raw_value.isdigit():
+        try:
+            candidates.append(int(raw_value))
+        except Exception:
+            pass
+
+    mapped = None
+    for key in candidates:
+        if key in class_map:
+            mapped = class_map[key]
+            break
+        key_str = str(key)
+        if key_str in class_map:
+            mapped = class_map[key_str]
+            break
+
+    if mapped is None:
+        mapped = raw_str
+
+    mapped_str = str(mapped)
+    if mapped in class_exclude or mapped_str in class_exclude:
+        return None
+    return mapped_str
+
+
 def _map_mask_class(raw_value, class_map, class_exclude):
     raw_str = str(raw_value)
 
@@ -318,6 +350,16 @@ def _single_component_with_stats(binary_mask):
     return [(min_x, min_y, max_x, max_y, area_px)]
 
 
+def _filter_components_by_area(components, min_component_area_px=1):
+    try:
+        min_area = int(min_component_area_px)
+    except Exception:
+        min_area = 1
+    if min_area <= 1:
+        return list(components or [])
+    return [comp for comp in (components or []) if len(comp) >= 5 and int(comp[4]) >= min_area]
+
+
 def load_coco_stats(annotations_path, images_root):
     # Support image-only splits (e.g., test sets without labels).
     if not os.path.exists(annotations_path):
@@ -408,11 +450,13 @@ def load_coco_stats(annotations_path, images_root):
     return stats
 
 
-def load_yolo_stats(images_root, annotations_root=None):
+def load_yolo_stats(images_root, annotations_root=None, class_map=None, class_exclude=None):
     if not os.path.isdir(images_root):
         print(f"[{images_root}] is not a directory.")
         return None
 
+    class_map = class_map or {}
+    class_exclude = set(class_exclude or [])
     image_files = _collect_images(images_root)
     stats = _new_stats_base(num_images=len(image_files))
 
@@ -440,7 +484,9 @@ def load_yolo_stats(images_root, annotations_root=None):
                 parts = line.strip().split()
                 if len(parts) < 5:
                     continue
-                cls = parts[0]
+                cls = _map_detection_class(parts[0], class_map, class_exclude)
+                if not cls:
+                    continue
                 class_set.add(cls)
                 stats["class_distribution"][cls] += 1
                 stats["num_annotations"] += 1
@@ -588,11 +634,12 @@ def load_image_folder_stats(images_root, class_map=None, class_exclude=None):
             continue
         class_path = os.path.join(images_root, cls)
         target_cls = class_map.get(cls, cls)
-        class_images = [
-            os.path.join(class_path, f)
-            for f in os.listdir(class_path)
-            if os.path.splitext(f)[1].lower() in IMAGE_EXTS
-        ]
+        class_images = []
+        for root, _, files in os.walk(class_path):
+            for fname in files:
+                if os.path.splitext(fname)[1].lower() in IMAGE_EXTS:
+                    class_images.append(os.path.join(root, fname))
+        class_images.sort()
 
         stats["class_distribution"][target_cls] += len(class_images)
         stats["num_images"] += len(class_images)
@@ -619,6 +666,7 @@ def load_png_mask_stats(
     class_exclude=None,
     mask_suffixes=None,
     connected_components=True,
+    min_component_area_px=1,
 ):
     if not os.path.isdir(images_root):
         return None
@@ -637,6 +685,13 @@ def load_png_mask_stats(
         connected_components = connected_components.strip().lower() not in {"0", "false", "no", "off"}
     else:
         connected_components = bool(connected_components)
+
+    try:
+        min_component_area_px = int(min_component_area_px)
+    except Exception:
+        min_component_area_px = 1
+    if min_component_area_px < 1:
+        min_component_area_px = 1
 
     image_files = _collect_images(images_root)
     stats = _new_stats_base(num_images=len(image_files))
@@ -747,6 +802,10 @@ def load_png_mask_stats(
                                 components = _connected_components_with_stats(cls_mask)
                             else:
                                 components = _single_component_with_stats(cls_mask)
+                            components = _filter_components_by_area(
+                                components,
+                                min_component_area_px=min_component_area_px,
+                            )
                             if not components:
                                 continue
 

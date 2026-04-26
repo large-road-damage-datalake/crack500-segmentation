@@ -6,7 +6,7 @@ Crack500 is a task-specific segmentation package derived from the pavement-crack
 
 - Task: segmentation
 - Images: 494
-- Annotations: 5040
+- Annotations: 3200
 - Classes: 1 (crack)
 - Annotation format: paired PNG masks
 

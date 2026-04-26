@@ -82,6 +82,12 @@ data:
 countries:
   - name: "Country Name"
     image_count: 0
+
+# Optional region drilldown used to generate stats/region_views.json.
+# Region names are matched against split names/images roots.
+# regions:
+#   - name: "Region A"
+#   - name: "Region B"
 temporal_scope: "Not specified"
 
 # Authors

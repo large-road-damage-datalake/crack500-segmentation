@@ -19,9 +19,9 @@
       "primary_task": "segmentation",
       "task_subtype": "semantic_segmentation"
     },
+    "label_taxonomy_version": "road_damage_v2",
     "segmentation_type": "semantic_segmentation",
-    "task_subtype": "semantic_segmentation",
-    "label_taxonomy_version": "road_damage_v1"
+    "task_subtype": "semantic_segmentation"
   },
   "imaging_setup": {
     "camera": "Road-surface crack inspection imaging setup",
@@ -61,6 +61,50 @@
         "resolution": "3264x2448",
         "count": 36
       }
+    ],
+    "resolution_by_country": [
+      {
+        "name": "United States",
+        "resolutions": [
+          "1440x2560",
+          "2448x3168",
+          "2448x3180",
+          "2560x1440",
+          "2592x1904",
+          "2592x1936",
+          "3264x2448"
+        ],
+        "resolution_details": [
+          {
+            "resolution": "1440x2560",
+            "count": 16
+          },
+          {
+            "resolution": "2448x3168",
+            "count": 1
+          },
+          {
+            "resolution": "2448x3180",
+            "count": 1
+          },
+          {
+            "resolution": "2560x1440",
+            "count": 413
+          },
+          {
+            "resolution": "2592x1904",
+            "count": 1
+          },
+          {
+            "resolution": "2592x1936",
+            "count": 26
+          },
+          {
+            "resolution": "3264x2448",
+            "count": 36
+          }
+        ]
+      }
     ]
   },
   "annotation_schema": [
@@ -74,29 +118,60 @@
           "description": "Crack500 class: crack",
           "color": "#294F71",
           "canonical_name": "crack",
-          "instances": 5040
+          "instances": 3200
         }
       ]
     }
   ],
+  "class_taxonomy": {
+    "version": "road_damage_v2",
+    "classes": [
+      {
+        "canonical_name": "crack",
+        "display_name": "Crack",
+        "damage_family": "crack",
+        "damage_subtype": "generic",
+        "role": "damage_target",
+        "semantic_role": "damage",
+        "training_role": "target",
+        "status": "stable",
+        "is_damage_target": true,
+        "aliases": [
+          "crack",
+          "cracked"
+        ],
+        "source_labels": [
+          "crack"
+        ],
+        "taxonomy_source": "registry",
+        "taxonomy_unresolved": false,
+        "mapping_type": "codebook-based",
+        "mapping_confidence": "high"
+      }
+    ],
+    "damage_types": [
+      "crack"
+    ],
+    "unresolved_labels": []
+  },
   "statistics": {
     "n_images": 494,
-    "n_annotations": 5040,
+    "n_annotations": 3200,
     "n_images_with_annotations": 494,
-    "average_annotations_per_image": 10.20242914979757,
+    "average_annotations_per_image": 6.477732793522267,
     "dataset_size": "1.18 GB",
     "dataset_size_bytes": 1270914148,
     "dataset_file_count": 988,
     "image_format": "png_masks",
     "class_distribution": {
-      "crack": 5040
+      "crack": 3200
     },
     "split": {
       "data": {
         "n_images": 494,
-        "percentage": 1,
+        "percentage": 1.0,
         "n_images_with_annotations": 494,
-        "annotation_coverage": 1,
+        "annotation_coverage": 1.0,
         "dataset_size": "1.18 GB",
         "dataset_size_bytes": 1270914148,
         "dataset_file_count": 988
@@ -109,7 +184,7 @@
         "name": "United States",
         "image_count": 494,
         "annotated_image_count": 494,
-        "annotation_coverage": 1
+        "annotation_coverage": 1.0
       }
     ],
     "temporal_scope": "Published 2019"
@@ -122,12 +197,12 @@
   "authors": [
     {
       "name": "Fan Yang",
-      "affiliation": "Department of Computer and Information Sciences, Temple University",
+      "affiliation": "Temple University",
       "role": "Dataset Creator"
     },
     {
       "name": "Lei Zhang",
-      "affiliation": "Department of Radiology, University of Pittsburgh",
+      "affiliation": "University of Pittsburgh",
       "role": "Dataset Creator"
     },
     {
@@ -175,36 +250,5 @@
     "article_title": "Feature Pyramid and Hierarchical Boosting Network for Pavement Crack Detection",
     "journal": "IEEE Transactions on Intelligent Transportation Systems",
     "year": 2019
-  },
-  "class_taxonomy": {
-    "version": "road_damage_v2",
-    "classes": [
-      {
-        "canonical_name": "crack",
-        "display_name": "Crack",
-        "damage_family": "crack",
-        "damage_subtype": "generic",
-        "role": "damage_target",
-        "semantic_role": "damage",
-        "training_role": "target",
-        "status": "stable",
-        "is_damage_target": true,
-        "aliases": [
-          "crack",
-          "cracked"
-        ],
-        "source_labels": [
-          "crack"
-        ],
-        "taxonomy_source": "codebook",
-        "taxonomy_unresolved": false,
-        "mapping_type": "codebook-based",
-        "mapping_confidence": "high"
-      }
-    ],
-    "damage_types": [
-      "crack"
-    ],
-    "unresolved_labels": []
   }
 }

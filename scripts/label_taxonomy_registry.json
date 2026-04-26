@@ -15,6 +15,7 @@
     "unknown_to_background_allowed": false,
     "code_labels_global_inference_allowed": false,
     "require_dataset_scoped_codebooks": true,
+    "dataset_codebooks_location": "Use per-dataset config label_codebook; do not add dataset-specific code mappings into this default registry.",
     "preserve_raw_source_labels": true
   },
   "mapping_quality_levels": [
@@ -459,7 +460,7 @@
       "valid_tasks": ["classification", "object_detection", "segmentation"],
       "supports_instance_geometry": ["image_level", "bbox", "mask"],
       "status": "dataset_specific",
-      "aliases": ["street_inventory"]
+      "aliases": ["street_inventory", "Street Inventory", "manhole cover", "Manhole Cover", "manhole_cover"]
     },
     {
       "canonical_name": "class.negative",
@@ -591,73 +592,5 @@
       "mapping_confidence": "high",
       "source_dataset_id": "*"
     }
-  ],
-  "dataset_codebooks": {
-    "rdd2022-object-detection": {
-      "mapping_source": "official codebook",
-      "mapping_review_status": "draft",
-      "mappings": {
-        "D00": {
-          "canonical_name": null,
-          "mapping_source": "pending official codebook linkage",
-          "mapping_review_status": "draft",
-          "mapping_confidence": "low"
-        },
-        "D01": {
-          "canonical_name": null,
-          "mapping_source": "pending official codebook linkage",
-          "mapping_review_status": "draft",
-          "mapping_confidence": "low"
-        },
-        "D0w0": {
-          "canonical_name": null,
-          "mapping_source": "pending official codebook linkage",
-          "mapping_review_status": "draft",
-          "mapping_confidence": "low"
-        },
-        "D10": {
-          "canonical_name": null,
-          "mapping_source": "pending official codebook linkage",
-          "mapping_review_status": "draft",
-          "mapping_confidence": "low"
-        },
-        "D11": {
-          "canonical_name": null,
-          "mapping_source": "pending official codebook linkage",
-          "mapping_review_status": "draft",
-          "mapping_confidence": "low"
-        },
-        "D20": {
-          "canonical_name": null,
-          "mapping_source": "pending official codebook linkage",
-          "mapping_review_status": "draft",
-          "mapping_confidence": "low"
-        },
-        "D40": {
-          "canonical_name": null,
-          "mapping_source": "pending official codebook linkage",
-          "mapping_review_status": "draft",
-          "mapping_confidence": "low"
-        },
-        "D43": {
-          "canonical_name": null,
-          "mapping_source": "pending official codebook linkage",
-          "mapping_review_status": "draft",
-          "mapping_confidence": "low"
-        },
-        "D44": {
-          "canonical_name": null,
-          "mapping_source": "pending official codebook linkage",
-          "mapping_review_status": "draft",
-          "mapping_confidence": "low"
-        },
-        "D50": {
-          "canonical_name": null,
-          "mapping_source": "pending official codebook linkage",
-          "mapping_review_status": "draft",
-          "mapping_confidence": "low"
-        }
-      }
-    }
-  }
+  ]
 }

@@ -4,7 +4,7 @@
 - Source dataset: Crack500
 - Task: segmentation
 - Image count: 494
-- Annotation count: 5040
+- Annotation count: 3200
 - Class setup: 1 (crack)
 
 Primary references:

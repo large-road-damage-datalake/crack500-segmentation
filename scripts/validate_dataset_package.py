@@ -384,6 +384,8 @@ def _country_aliases(country_name):
         aliases.add(parts[-1])
     if len(parts) >= 2:
         aliases.add("_".join(parts[:2]))
+    if base in {"united_states", "unitedstates"}:
+        aliases.update({"us", "usa"})
     return {a for a in aliases if a}
 
 

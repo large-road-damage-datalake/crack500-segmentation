@@ -85,11 +85,22 @@ def generate_dataset_summary(stats_data, vis_dir):
     
     global_stats = stats_data.get('global', {})
     splits = stats_data.get('splits', {})
+    resolution_hist = global_stats.get('image_resolution_histogram', {}) or {}
     
     summary = {
         'total_images': global_stats.get('num_images', 0),
         'total_annotations': global_stats.get('num_annotations', 0),
         'total_classes': global_stats.get('num_classes', 0),
+        'annotated_images': global_stats.get('num_images_with_annotations', 0),
+        'annotation_coverage': global_stats.get('annotation_coverage', 0),
+        'image_resolution_histogram': resolution_hist,
+        'resolution_details': [
+            {
+                'resolution': str(key),
+                'count': int(value)
+            }
+            for key, value in resolution_hist.items()
+        ],
         'splits_breakdown': {}
     }
     
@@ -98,7 +109,10 @@ def generate_dataset_summary(stats_data, vis_dir):
         summary['splits_breakdown'][split_name] = {
             'images': split_stats.get('num_images', 0),
             'annotations': split_stats.get('num_annotations', 0),
-            'classes': split_stats.get('class_distribution', {})
+            'annotated_images': split_stats.get('num_images_with_annotations', 0),
+            'annotation_coverage': split_stats.get('annotation_coverage', 0),
+            'classes': split_stats.get('class_distribution', {}),
+            'image_resolution_histogram': split_stats.get('image_resolution_histogram', {}) or {},
         }
     
     output_file = os.path.join(vis_dir, 'dataset_summary.json')

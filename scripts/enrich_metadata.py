@@ -118,10 +118,15 @@ def _build_country_lookup(config):
         cid = _slugify_token(name)
         if not cid:
             continue
+        aliases = _country_aliases(name)
+        if isinstance(item, dict):
+            extra_aliases = item.get('aliases', [])
+            if isinstance(extra_aliases, list):
+                aliases.update(_slugify_token(v) for v in extra_aliases if str(v).strip())
         lookup[cid] = {
             'id': cid,
             'label': name,
-            'aliases': _country_aliases(name),
+            'aliases': {a for a in aliases if a},
         }
     return lookup
 
@@ -1101,6 +1106,75 @@ def _compute_country_statistics(splits, config, task_type=''):
     return ordered
 
 
+def _compute_country_resolution_details(splits, config):
+    if not isinstance(splits, dict) or not splits:
+        return []
+
+    country_lookup = _build_country_lookup(config)
+    country_histograms = {}
+
+    for split_name, split_stats in splits.items():
+        cid = _infer_country_id_from_split(split_name, country_lookup)
+        if not cid:
+            continue
+
+        label = country_lookup.get(cid, {}).get('label')
+        if not label:
+            label = cid.replace('_', ' ').title()
+
+        rec = country_histograms.setdefault(
+            cid,
+            {
+                'name': label,
+                'histogram': {},
+            },
+        )
+
+        histogram = (split_stats or {}).get('image_resolution_histogram', {}) or {}
+        for resolution, count in histogram.items():
+            res_key = str(resolution).strip()
+            if not res_key:
+                continue
+            rec['histogram'][res_key] = rec['histogram'].get(res_key, 0) + int(count or 0)
+
+    if not country_histograms:
+        return []
+
+    ordered = []
+    for cid in country_lookup.keys():
+        if cid not in country_histograms:
+            continue
+        rec = country_histograms[cid]
+        hist = rec.pop('histogram', {})
+        details = [{'resolution': key, 'count': int(value)} for key, value in hist.items()]
+        details.sort(
+            key=lambda item: (
+                int(str(item['resolution']).split('x')[0]) if 'x' in str(item['resolution']) and str(item['resolution']).split('x')[0].isdigit() else 10**9,
+                int(str(item['resolution']).split('x')[1]) if 'x' in str(item['resolution']) and str(item['resolution']).split('x')[1].isdigit() else 10**9,
+            )
+        )
+        rec['resolutions'] = [item['resolution'] for item in details]
+        rec['resolution_details'] = details
+        ordered.append(rec)
+
+    remaining = sorted([cid for cid in country_histograms.keys() if cid not in country_lookup])
+    for cid in remaining:
+        rec = country_histograms[cid]
+        hist = rec.pop('histogram', {})
+        details = [{'resolution': key, 'count': int(value)} for key, value in hist.items()]
+        details.sort(
+            key=lambda item: (
+                int(str(item['resolution']).split('x')[0]) if 'x' in str(item['resolution']) and str(item['resolution']).split('x')[0].isdigit() else 10**9,
+                int(str(item['resolution']).split('x')[1]) if 'x' in str(item['resolution']) and str(item['resolution']).split('x')[1].isdigit() else 10**9,
+            )
+        )
+        rec['resolutions'] = [item['resolution'] for item in details]
+        rec['resolution_details'] = details
+        ordered.append(rec)
+
+    return ordered
+
+
 def enrich_metadata_from_stats(metadata_path, stats_data, config):
     """
     Enrich METADATA.json with computed statistics.
@@ -1206,6 +1280,20 @@ def enrich_metadata_from_stats(metadata_path, stats_data, config):
         geo['countries'] = config.get('countries', geo.get('countries', []))
     geo['temporal_scope'] = config.get('temporal_scope', geo.get('temporal_scope', '2021-2024'))
     metadata['geographic_coverage'] = geo
+
+    imaging_setup = metadata.get('imaging_setup', {})
+    if not isinstance(imaging_setup, dict):
+        imaging_setup = {}
+    global_resolution_hist = global_stats.get('image_resolution_histogram', {}) or {}
+    resolution_details = [
+        {'resolution': str(key), 'count': int(value)}
+        for key, value in global_resolution_hist.items()
+    ]
+    country_resolution_details = _compute_country_resolution_details(splits, config)
+    imaging_setup['resolution_details'] = resolution_details
+    if country_resolution_details:
+        imaging_setup['resolution_by_country'] = country_resolution_details
+    metadata['imaging_setup'] = imaging_setup
     
     # Update authors
     if 'authors' in config:
