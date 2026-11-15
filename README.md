@@ -10,7 +10,7 @@ Crack500 is a task-specific segmentation package derived from the pavement-crack
 - Classes: 1 (crack)
 - Annotation format: paired PNG masks
 
-This local raw copy contains 494 valid image-mask pairs under the provided folder.
+The public Crack500 archive distributed via `fyangneil/pavement-crack-detection` contains 494 full-resolution pavement image-mask pairs captured using smartphones around the main campus of Temple University (Philadelphia, PA, USA), including 3 pairs (`20160222_080933`, `20160222_165359`, and `20160328_151130`) where the image resolution (`1440x2560`) differs from the mask resolution (`1936x2592`).
 
 ## Source Dataset
 

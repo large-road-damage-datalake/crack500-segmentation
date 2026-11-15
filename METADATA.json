@@ -5,7 +5,7 @@
     "name": "Crack500",
     "short_name": "crack500-seg",
     "description": "Segmentation packaging of Crack500 from the pavement-crack-detection project, with pixel-level crack masks.",
-    "year": 2019
+    "year": 2016
   },
   "project_context": {
     "task": "segmentation",
@@ -24,7 +24,7 @@
     "task_subtype": "semantic_segmentation"
   },
   "imaging_setup": {
-    "camera": "Road-surface crack inspection imaging setup",
+    "camera": "Smartphone cameras (LG G3, Apple iPhone 5, Samsung Galaxy S6)",
     "camera_viewpoint": [
       "top-down"
     ],
@@ -174,8 +174,13 @@
         "annotation_coverage": 1.0,
         "dataset_size": "1.18 GB",
         "dataset_size_bytes": 1270914148,
-        "dataset_file_count": 988
+        "dataset_file_count": 988,
+        "annotated": true
       }
+    },
+    "n_images_in_annotated_splits": 494,
+    "integrity": {
+      "annotation_size_differs_from_image": 3
     }
   },
   "geographic_coverage": {
@@ -187,42 +192,52 @@
         "annotation_coverage": 1.0
       }
     ],
-    "temporal_scope": "Published 2019"
+    "temporal_scope": "Captured around the main campus of Temple University (Philadelphia, PA, USA) around February 2016; introduced in 2016 (ICIP) and released with pixel-level segmentation masks in 2019/2020 (IEEE T-ITS)"
   },
   "quality_assurance": {
-    "annotation_quality": "Pixel-level masks distributed with source Crack500 release",
+    "annotation_quality": "Pixel-level binary crack masks distributed with the Crack500 release (494 image-mask pairs in the public archive, including 3 pairs with mismatched image and mask dimensions: 20160222_080933, 20160222_165359, and 20160328_151130)",
     "inter_annotator_agreement": "Not reported",
     "review_status": "Published research dataset"
   },
   "authors": [
     {
       "name": "Fan Yang",
-      "affiliation": "Temple University",
+      "affiliation": "Department of Computer and Information Sciences, Temple University, Philadelphia, PA, USA",
       "role": "Dataset Creator"
     },
     {
       "name": "Lei Zhang",
-      "affiliation": "University of Pittsburgh",
+      "affiliation": "Department of Electrical and Computer Engineering, Temple University, Philadelphia, PA, USA; Department of Radiology, University of Pittsburgh, Pittsburgh, PA, USA",
       "role": "Dataset Creator"
     },
     {
       "name": "Sijia Yu",
-      "affiliation": "Temple University",
+      "affiliation": "Department of Computer and Information Sciences, Temple University, Philadelphia, PA, USA",
       "role": "Dataset Creator"
     },
     {
       "name": "Danil Prokhorov",
-      "affiliation": "Toyota Research Institute",
+      "affiliation": "Toyota Research Institute, Ann Arbor, MI, USA",
       "role": "Dataset Creator"
     },
     {
       "name": "Xue Mei",
-      "affiliation": "Toyota Research Institute",
+      "affiliation": "Department of Future Mobility Research, Toyota Technical Center Division, Toyota Research Institute, Ann Arbor, MI, USA",
       "role": "Dataset Creator"
     },
     {
       "name": "Haibin Ling",
-      "affiliation": "Temple University",
+      "affiliation": "Department of Computer and Information Sciences, Temple University, Philadelphia, PA, USA",
+      "role": "Dataset Creator"
+    },
+    {
+      "name": "Yimin Daniel Zhang",
+      "affiliation": "Department of Electrical and Computer Engineering, Temple University, Philadelphia, PA, USA",
+      "role": "Dataset Creator"
+    },
+    {
+      "name": "Ying Julie Zhu",
+      "affiliation": "Department of Electrical and Computer Engineering, Temple University, Philadelphia, PA, USA",
       "role": "Dataset Creator"
     }
   ],
@@ -234,7 +249,7 @@
     "homepage": "https://github.com/fyangneil/pavement-crack-detection?tab=readme-ov-file"
   },
   "citation": {
-    "bibtex": "@article{yang2019feature,\n  title = {Feature Pyramid and Hierarchical Boosting Network for Pavement Crack Detection},\n  author = {Yang, Fan and Zhang, Lei and Yu, Sijia and Prokhorov, Danil and Mei, Xue and Ling, Haibin},\n  journal = {IEEE Transactions on Intelligent Transportation Systems},\n  year = {2019},\n  url = {https://ieeexplore.ieee.org/abstract/document/8694955}\n}\n\n@inproceedings{zhang2016road,\n  title = {Road crack detection using deep convolutional neural network},\n  author = {Zhang, Lei and Yang, Fan and Zhang, Yimin Daniel and Zhu, Ying Julie},\n  booktitle = {2016 IEEE International Conference on Image Processing (ICIP)},\n  pages = {3708--3712},\n  year = {2016},\n  doi = {10.1109/ICIP.2016.7533052},\n  url = {https://ieeexplore.ieee.org/document/7533052}\n}"
+    "bibtex": "@article{yang2020feature,\n  title = {Feature Pyramid and Hierarchical Boosting Network for Pavement Crack Detection},\n  author = {Yang, Fan and Zhang, Lei and Yu, Sijia and Prokhorov, Danil and Mei, Xue and Ling, Haibin},\n  journal = {IEEE Transactions on Intelligent Transportation Systems},\n  volume = {21},\n  number = {4},\n  pages = {1525--1535},\n  year = {2020},\n  doi = {10.1109/TITS.2019.2910595},\n  url = {https://ieeexplore.ieee.org/abstract/document/8694955}\n}\n\n@inproceedings{zhang2016road,\n  title = {Road crack detection using deep convolutional neural network},\n  author = {Zhang, Lei and Yang, Fan and Zhang, Yimin Daniel and Zhu, Ying Julie},\n  booktitle = {2016 IEEE International Conference on Image Processing (ICIP)},\n  pages = {3708--3712},\n  year = {2016},\n  doi = {10.1109/ICIP.2016.7533052},\n  url = {https://ieeexplore.ieee.org/document/7533052}\n}"
   },
   "tags": [
     "segmentation",
@@ -249,6 +264,6 @@
     "article_doi": "10.1109/TITS.2019.2910595",
     "article_title": "Feature Pyramid and Hierarchical Boosting Network for Pavement Crack Detection",
     "journal": "IEEE Transactions on Intelligent Transportation Systems",
-    "year": 2019
+    "year": 2020
   }
 }
